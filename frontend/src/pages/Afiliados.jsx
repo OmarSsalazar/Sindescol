@@ -1,11 +1,14 @@
 import { useState, useEffect } from "react";
 import { ModalCrearAfiliado } from "../components/afiliados/ModalCrearAfiliado";
+import { ModalVerAfiliado } from "../components/afiliados/ModalVerAfiliado";
 import { getAfiliados, createAfiliado } from "../services/api";
 import "./Afiliados.css";
 
 function Afiliados() {
   const [afiliados, setAfiliados] = useState([]);
-  const [modalOpen, setModalOpen] = useState(false);
+  const [modalCrearOpen, setModalCrearOpen] = useState(false);
+  const [modalVerOpen, setModalVerOpen] = useState(false);
+  const [afiliadoSeleccionado, setAfiliadoSeleccionado] = useState(null);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -75,7 +78,7 @@ function Afiliados() {
 
       if (data.success) {
         console.log("Afiliado creado exitosamente");
-        setModalOpen(false);
+        setModalCrearOpen(false);
         cargarAfiliados();
       } else {
         console.error("Error del servidor:", data.error);
@@ -85,11 +88,16 @@ function Afiliados() {
     }
   };
 
+  const handleVerAfiliado = (id) => {
+    setAfiliadoSeleccionado(id);
+    setModalVerOpen(true);
+  };
+
   return (
     <div className="afiliados-container">
       <div className="afiliados-header">
         <h1>Gestión de Afiliados</h1>
-        <button className="btn-crear" onClick={() => setModalOpen(true)}>
+        <button className="btn-crear" onClick={() => setModalCrearOpen(true)}>
           + Nuevo Afiliado
         </button>
       </div>
@@ -117,8 +125,14 @@ function Afiliados() {
                 <td>{afiliado.nombre_cargo || "-"}</td>
                 <td>{afiliado.nombre_institucion || "-"}</td>
                 <td>
-                  <button className="btn-edit">Editar</button>
-                  <button className="btn-delete">Eliminar</button>
+                  <button 
+                    className="btn-view"
+                    onClick={() => handleVerAfiliado(afiliado.id_afiliado)}
+                  >
+                    👁️ Ver
+                  </button>
+                  <button className="btn-edit">✏️ Editar</button>
+                  <button className="btn-delete">🗑️ Eliminar</button>
                 </td>
               </tr>
             ))}
@@ -127,9 +141,18 @@ function Afiliados() {
       )}
 
       <ModalCrearAfiliado
-        isOpen={modalOpen}
-        onClose={() => setModalOpen(false)}
+        isOpen={modalCrearOpen}
+        onClose={() => setModalCrearOpen(false)}
         onSubmit={handleCrearAfiliado}
+      />
+
+      <ModalVerAfiliado
+        isOpen={modalVerOpen}
+        onClose={() => {
+          setModalVerOpen(false);
+          setAfiliadoSeleccionado(null);
+        }}
+        afiliadoId={afiliadoSeleccionado}
       />
     </div>
   );

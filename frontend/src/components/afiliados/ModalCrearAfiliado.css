@@ -210,3 +210,12 @@
     min-width: 120px;
   }
 }
+
+.tab-btn.completed {
+  color: #4CAF50;
+}
+
+.tab-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed !important;
+}
