@@ -3,6 +3,12 @@ import "./ModalCrearAfiliado.css";
 
 export const ModalCrearAfiliado = ({ isOpen, onClose, onSubmit }) => {
   const [activeTab, setActiveTab] = useState("personales");
+  const [completedTabs, setCompletedTabs] = useState({
+    personales: false,
+    seguridad: false,
+    laborales: false
+  });
+
   const [formData, setFormData] = useState({
     // Personales
     cedula: "",
@@ -96,23 +102,17 @@ export const ModalCrearAfiliado = ({ isOpen, onClose, onSubmit }) => {
       const data = {};
       for (const [key, url] of Object.entries(endpoints)) {
         try {
-          console.log(`Cargando ${key} desde ${url}...`);
           const response = await fetch(url);
-          console.log(`${key} - Status: ${response.status}`);
-
           if (!response.ok) {
-            console.warn(`${key} retornó ${response.status}, usando array vacío`);
             data[key] = [];
             continue;
           }
-
           const text = await response.text();
           let result;
           try {
             result = JSON.parse(text);
             data[key] = result.data || result || [];
           } catch (e) {
-            console.warn(`${key} no es JSON válido, usando array vacío`);
             data[key] = [];
           }
         } catch (err) {
@@ -121,10 +121,79 @@ export const ModalCrearAfiliado = ({ isOpen, onClose, onSubmit }) => {
         }
       }
 
-      console.log("Opciones cargadas:", data);
       setOpciones(data);
     } catch (error) {
       console.error("Error cargando opciones:", error);
+    }
+  };
+
+  // Validar campos requeridos por pestaña
+  const validarPestana = (pestana) => {
+    if (pestana === "personales") {
+      if (!formData.cedula || !formData.nombres || !formData.apellidos) {
+        alert("Por favor completa los campos obligatorios: Cédula, Nombres y Apellidos");
+        return false;
+      }
+      return true;
+    }
+
+    if (pestana === "seguridad") {
+      // La pestaña de seguridad social es opcional, así que siempre es válida
+      return true;
+    }
+
+    if (pestana === "laborales") {
+      if (!formData.id_cargo) {
+        alert("Por favor selecciona un cargo");
+        return false;
+      }
+      return true;
+    }
+
+    return true;
+  };
+
+  // Función para cambiar de pestaña con validación
+  const cambiarPestana = (nuevaPestana) => {
+    // Si intenta ir hacia atrás, permitir siempre
+    const orden = ["personales", "seguridad", "laborales"];
+    const indexActual = orden.indexOf(activeTab);
+    const indexNuevo = orden.indexOf(nuevaPestana);
+
+    if (indexNuevo < indexActual) {
+      setActiveTab(nuevaPestana);
+      return;
+    }
+
+    // Si intenta avanzar, validar la pestaña actual
+    if (!validarPestana(activeTab)) {
+      return;
+    }
+
+    // Marcar la pestaña actual como completada
+    setCompletedTabs(prev => ({
+      ...prev,
+      [activeTab]: true
+    }));
+
+    setActiveTab(nuevaPestana);
+  };
+
+  // Función para avanzar a la siguiente pestaña
+  const siguientePestana = () => {
+    if (activeTab === "personales") {
+      cambiarPestana("seguridad");
+    } else if (activeTab === "seguridad") {
+      cambiarPestana("laborales");
+    }
+  };
+
+  // Función para retroceder a la pestaña anterior
+  const pestanaAnterior = () => {
+    if (activeTab === "seguridad") {
+      setActiveTab("personales");
+    } else if (activeTab === "laborales") {
+      setActiveTab("seguridad");
     }
   };
 
@@ -166,12 +235,9 @@ export const ModalCrearAfiliado = ({ isOpen, onClose, onSubmit }) => {
   const handleSubmit = (e) => {
     e.preventDefault();
 
-    // Validar campos requeridos
-    const requeridos = ["cedula", "nombres", "apellidos", "id_cargo"];
-    const incompletos = requeridos.filter((campo) => !formData[campo]);
-
-    if (incompletos.length > 0) {
-      alert(`Faltan campos requeridos: ${incompletos.join(", ")}`);
+    // Validar todos los campos requeridos
+    if (!formData.cedula || !formData.nombres || !formData.apellidos || !formData.id_cargo) {
+      alert("Faltan campos requeridos. Por favor completa todos los pasos.");
       return;
     }
 
@@ -214,6 +280,11 @@ export const ModalCrearAfiliado = ({ isOpen, onClose, onSubmit }) => {
     });
     setOtroCargo({ nombre_cargo: "", fecha_inicio: "", fecha_fin: "" });
     setActiveTab("personales");
+    setCompletedTabs({
+      personales: false,
+      seguridad: false,
+      laborales: false
+    });
   };
 
   if (!isOpen) return null;
@@ -230,22 +301,32 @@ export const ModalCrearAfiliado = ({ isOpen, onClose, onSubmit }) => {
 
         <div className="modal-tabs">
           <button
-            className={`tab-btn ${activeTab === "personales" ? "active" : ""}`}
-            onClick={() => setActiveTab("personales")}
+            className={`tab-btn ${activeTab === "personales" ? "active" : ""} ${completedTabs.personales ? "completed" : ""}`}
+            onClick={() => cambiarPestana("personales")}
           >
-            Datos Personales
+            ✓ Datos Personales
           </button>
           <button
-            className={`tab-btn ${activeTab === "seguridad" ? "active" : ""}`}
-            onClick={() => setActiveTab("seguridad")}
+            className={`tab-btn ${activeTab === "seguridad" ? "active" : ""} ${completedTabs.seguridad ? "completed" : ""}`}
+            onClick={() => cambiarPestana("seguridad")}
+            disabled={!completedTabs.personales && activeTab !== "seguridad"}
+            style={{
+              opacity: !completedTabs.personales && activeTab !== "seguridad" ? 0.5 : 1,
+              cursor: !completedTabs.personales && activeTab !== "seguridad" ? "not-allowed" : "pointer"
+            }}
           >
-            Seguridad Social
+            ✓ Seguridad Social
           </button>
           <button
-            className={`tab-btn ${activeTab === "laborales" ? "active" : ""}`}
-            onClick={() => setActiveTab("laborales")}
+            className={`tab-btn ${activeTab === "laborales" ? "active" : ""} ${completedTabs.laborales ? "completed" : ""}`}
+            onClick={() => cambiarPestana("laborales")}
+            disabled={!completedTabs.seguridad && activeTab !== "laborales"}
+            style={{
+              opacity: !completedTabs.seguridad && activeTab !== "laborales" ? 0.5 : 1,
+              cursor: !completedTabs.seguridad && activeTab !== "laborales" ? "not-allowed" : "pointer"
+            }}
           >
-            Datos Laborales
+            ✓ Datos Laborales
           </button>
         </div>
 
@@ -379,6 +460,17 @@ export const ModalCrearAfiliado = ({ isOpen, onClose, onSubmit }) => {
                   </div>
                 </div>
               </fieldset>
+
+              {/* Botones de navegación */}
+              <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "1.5rem", gap: "0.5rem" }}>
+                <button
+                  type="button"
+                  className="btn-submit"
+                  onClick={siguientePestana}
+                >
+                  Siguiente →
+                </button>
+              </div>
             </div>
           )}
 
@@ -450,13 +542,30 @@ export const ModalCrearAfiliado = ({ isOpen, onClose, onSubmit }) => {
                   </select>
                 </div>
               </div>
+
+              {/* Botones de navegación */}
+              <div style={{ display: "flex", justifyContent: "space-between", marginTop: "1.5rem" }}>
+                <button
+                  type="button"
+                  className="btn-cancel"
+                  onClick={pestanaAnterior}
+                >
+                  ← Anterior
+                </button>
+                <button
+                  type="button"
+                  className="btn-submit"
+                  onClick={siguientePestana}
+                >
+                  Siguiente →
+                </button>
+              </div>
             </div>
           )}
 
           {/* TAB: DATOS LABORALES */}
           {activeTab === "laborales" && (
             <div className="tab-content">
-              {/* INFORMACIÓN BÁSICA LABORAL */}
               <fieldset className="fieldset">
                 <legend>Información Básica</legend>
                 <div className="form-row">
@@ -507,7 +616,7 @@ export const ModalCrearAfiliado = ({ isOpen, onClose, onSubmit }) => {
 
               {/* ACTAS DE NOMBRAMIENTO */}
               <fieldset className="fieldset">
-                <legend>Acta de Nombramiento</legend>
+                <legend>Acto administrativo de Nombramiento</legend>
                 <div className="form-row">
                   <div className="form-group">
                     <label>Tipo de Documento</label>
@@ -580,7 +689,7 @@ export const ModalCrearAfiliado = ({ isOpen, onClose, onSubmit }) => {
                 </div>
                 <div className="form-row">
                   <div className="form-group">
-                    <label>Archivo del Acta</label>
+                    <label>Subir</label>
                     <input
                       type="file"
                       name="archivo_posesion"
@@ -590,90 +699,7 @@ export const ModalCrearAfiliado = ({ isOpen, onClose, onSubmit }) => {
                   </div>
                 </div>
               </fieldset>
-
-              {/* OTROS CARGOS */}
-              <fieldset className="fieldset">
-                <legend>Otros Cargos</legend>
-                <div className="form-group">
-                  <label>Nombre del Cargo</label>
-                  <input
-                    type="text"
-                    name="nombre_cargo"
-                    value={otroCargo.nombre_cargo}
-                    onChange={handleOtroCargoChange}
-                    placeholder="Ej: Auxiliar de Sistemas"
-                  />
-                </div>
-
-                {/* FECHAS EN UNA SOLA LÍNEA */}
-                <div className="form-row">
-                  <div className="form-group">
-                    <label>Fecha de Inicio</label>
-                    <input
-                      type="date"
-                      name="fecha_inicio"
-                      value={otroCargo.fecha_inicio}
-                      onChange={handleOtroCargoChange}
-                    />
-                  </div>
-                  <div className="form-group">
-                    <label>Fecha de Fin</label>
-                    <input
-                      type="date"
-                      name="fecha_fin"
-                      value={otroCargo.fecha_fin}
-                      onChange={handleOtroCargoChange}
-                    />
-                  </div>
-                  <div className="form-group" style={{ display: "flex", alignItems: "flex-end" }}>
-                    <button
-                      type="button"
-                      className="btn-submit"
-                      onClick={agregarOtroCargo}
-                      style={{ width: "100%" }}
-                    >
-                      + Agregar Cargo
-                    </button>
-                  </div>
-                </div>
-
-                {/* Lista de otros cargos agregados */}
-                {formData.otros_cargos.length > 0 && (
-                  <div style={{ marginTop: "1rem" }}>
-                    <h4 style={{ fontSize: "14px", marginBottom: "0.5rem" }}>Cargos Agregados:</h4>
-                    {formData.otros_cargos.map((cargo, index) => (
-                      <div
-                        key={index}
-                        style={{
-                          background: "#f5f5f5",
-                          padding: "0.75rem",
-                          borderRadius: "4px",
-                          marginBottom: "0.5rem",
-                          display: "flex",
-                          justifyContent: "space-between",
-                          alignItems: "center"
-                        }}
-                      >
-                        <div>
-                          <strong>{cargo.nombre_cargo}</strong>
-                          <br />
-                          <small>
-                            {cargo.fecha_inicio} - {cargo.fecha_fin || "Actual"}
-                          </small>
-                        </div>
-                        <button
-                          type="button"
-                          className="btn-cancel"
-                          onClick={() => eliminarOtroCargo(index)}
-                          style={{ padding: "0.5rem 1rem" }}
-                        >
-                          Eliminar
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </fieldset>
+              
               {/* INSTITUCIÓN EDUCATIVA */}
               <fieldset className="fieldset">
                 <legend>Institución Educativa</legend>
@@ -744,21 +770,105 @@ export const ModalCrearAfiliado = ({ isOpen, onClose, onSubmit }) => {
                   </div>
                 </div>
               </fieldset>
+
+              {/* OTROS CARGOS */}
+              <fieldset className="fieldset">
+                <legend>Otros Cargos (opcional)</legend>
+                <div className="form-group">
+                  <label>Nombre del Cargo</label>
+                  <input
+                    type="text"
+                    name="nombre_cargo"
+                    value={otroCargo.nombre_cargo}
+                    onChange={handleOtroCargoChange}
+                    placeholder="Ej: Auxiliar de Sistemas"
+                  />
+                </div>
+
+                <div className="form-row">
+                  <div className="form-group">
+                    <label>Fecha de Inicio</label>
+                    <input
+                      type="date"
+                      name="fecha_inicio"
+                      value={otroCargo.fecha_inicio}
+                      onChange={handleOtroCargoChange}
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label>Fecha de Fin</label>
+                    <input
+                      type="date"
+                      name="fecha_fin"
+                      value={otroCargo.fecha_fin}
+                      onChange={handleOtroCargoChange}
+                    />
+                  </div>
+                  <div className="form-group" style={{ display: "flex", alignItems: "flex-end" }}>
+                    <button
+                      type="button"
+                      className="btn-submit"
+                      onClick={agregarOtroCargo}
+                      style={{ width: "100%" }}
+                    >
+                      + Agregar Cargo
+                    </button>
+                  </div>
+                </div>
+
+                {formData.otros_cargos.length > 0 && (
+                  <div style={{ marginTop: "1rem" }}>
+                    <h4 style={{ fontSize: "14px", marginBottom: "0.5rem" }}>Cargos Agregados:</h4>
+                    {formData.otros_cargos.map((cargo, index) => (
+                      <div
+                        key={index}
+                        style={{
+                          background: "#f5f5f5",
+                          padding: "0.75rem",
+                          borderRadius: "4px",
+                          marginBottom: "0.5rem",
+                          display: "flex",
+                          justifyContent: "space-between",
+                          alignItems: "center"
+                        }}
+                      >
+                        <div>
+                          <strong>{cargo.nombre_cargo}</strong>
+                          <br />
+                          <small>
+                            {cargo.fecha_inicio} - {cargo.fecha_fin || "Actual"}
+                          </small>
+                        </div>
+                        <button
+                          type="button"
+                          className="btn-cancel"
+                          onClick={() => eliminarOtroCargo(index)}
+                          style={{ padding: "0.5rem 1rem" }}
+                        >
+                          Eliminar
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </fieldset>
+
+
+              {/* Botones de navegación */}
+              <div style={{ display: "flex", justifyContent: "space-between", marginTop: "1.5rem" }}>
+                <button
+                  type="button"
+                  className="btn-cancel"
+                  onClick={pestanaAnterior}
+                >
+                  ← Anterior
+                </button>
+                <button type="submit" className="btn-submit">
+                  Crear Afiliado
+                </button>
+              </div>
             </div>
           )}
-
-          <div className="modal-footer">
-            <button
-              type="button"
-              className="btn-cancel"
-              onClick={() => { onClose(); resetForm(); }}
-            >
-              Cancelar
-            </button>
-            <button type="submit" className="btn-submit">
-              Crear Afiliado
-            </button>
-          </div>
         </form>
       </div>
     </div>

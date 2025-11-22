@@ -3,6 +3,7 @@ import express from "express";
 // Importar todas las rutas
 let afiliadsRoutes, cargosRoutes, cuotasRoutes, salariosDepartamentosRoutes;
 let religionesRoutes, municipiosRoutes, epsRoutes, arlRoutes, pensionRoutes, cesantiasRoutes, institucionesRoutes;
+let actasRoutes, otrosCargosRoutes;
 
 try {
   afiliadsRoutes = (await import("./afiliadsRoutes.js")).default;
@@ -32,7 +33,6 @@ try {
   console.error("❌ Error importando salariosDepartamentosRoutes:", err.message);
 }
 
-// Nuevas rutas
 try {
   religionesRoutes = (await import("./religionesRoutes.js")).default;
   console.log("✅ religionesRoutes importado");
@@ -82,6 +82,20 @@ try {
   console.error("❌ Error importando institucionesRoutes:", err.message);
 }
 
+try {
+  actasRoutes = (await import("./actasRoutes.js")).default;
+  console.log("✅ actasRoutes importado");
+} catch (err) {
+  console.error("❌ Error importando actasRoutes:", err.message);
+}
+
+try {
+  otrosCargosRoutes = (await import("./otrosCargosRoutes.js")).default;
+  console.log("✅ otrosCargosRoutes importado");
+} catch (err) {
+  console.error("❌ Error importando otrosCargosRoutes:", err.message);
+}
+
 const router = express.Router();
 
 // Registrar todas las rutas
@@ -90,7 +104,7 @@ if (cargosRoutes) router.use("/cargos", cargosRoutes);
 if (cuotasRoutes) router.use("/cuotas", cuotasRoutes);
 if (salariosDepartamentosRoutes) router.use("/salarios", salariosDepartamentosRoutes);
 
-// Nuevas rutas
+// Rutas de catálogos
 if (religionesRoutes) router.use("/religiones", religionesRoutes);
 if (municipiosRoutes) router.use("/municipios", municipiosRoutes);
 if (epsRoutes) router.use("/eps", epsRoutes);
@@ -98,6 +112,10 @@ if (arlRoutes) router.use("/arl", arlRoutes);
 if (pensionRoutes) router.use("/pension", pensionRoutes);
 if (cesantiasRoutes) router.use("/cesantias", cesantiasRoutes);
 if (institucionesRoutes) router.use("/instituciones", institucionesRoutes);
+
+// Rutas de actas y otros cargos
+if (actasRoutes) router.use("/actas", actasRoutes);
+if (otrosCargosRoutes) router.use("/otros-cargos", otrosCargosRoutes);
 
 console.log("✅ Todas las rutas cargadas");
 
