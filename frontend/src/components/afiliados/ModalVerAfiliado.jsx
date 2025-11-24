@@ -68,15 +68,42 @@ export const ModalVerAfiliado = ({ isOpen, onClose, afiliadoId }) => {
 
   const descargarArchivo = (base64Data, filename, mimeType) => {
     try {
+      if (!base64Data) {
+        alert("No hay archivo disponible para descargar");
+        return;
+      }
+
+      console.log("Descargando archivo:", filename);
+      console.log("Tipo MIME:", mimeType);
+      console.log("Tamaño Base64:", base64Data.length);
+
+      // Convertir base64 a blob
+      const byteCharacters = atob(base64Data);
+      const byteNumbers = new Array(byteCharacters.length);
+      
+      for (let i = 0; i < byteCharacters.length; i++) {
+        byteNumbers[i] = byteCharacters.charCodeAt(i);
+      }
+      
+      const byteArray = new Uint8Array(byteNumbers);
+      const blob = new Blob([byteArray], { type: mimeType });
+      
+      // Crear URL del blob y descargar
+      const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
-      link.href = `data:${mimeType};base64,${base64Data}`;
+      link.href = url;
       link.download = filename;
       document.body.appendChild(link);
       link.click();
+      
+      // Limpiar
       document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+      
+      console.log("✅ Archivo descargado exitosamente");
     } catch (error) {
-      console.error("Error descargando archivo:", error);
-      alert("Error al descargar el archivo");
+      console.error("❌ Error descargando archivo:", error);
+      alert("Error al descargar el archivo. Revisa la consola para más detalles.");
     }
   };
 
@@ -327,17 +354,32 @@ export const ModalVerAfiliado = ({ isOpen, onClose, afiliadoId }) => {
                         <span className="info-value">{formatearFecha(actas.nombramiento.fecha_resolucion)}</span>
                       </div>
                     </div>
-                    {actas.nombramiento.archivo_documento && (
-                      <button 
-                        className="btn-download"
-                        onClick={() => descargarArchivo(
-                          actas.nombramiento.archivo_documento,
-                          `nombramiento_${afiliado.cedula}.pdf`,
-                          'application/pdf'
-                        )}
-                      >
-                        📥 Descargar Documento
-                      </button>
+                    {actas.nombramiento.archivo_documento ? (
+                      <div style={{ marginTop: "15px" }}>
+                        <button 
+                          className="btn-download"
+                          onClick={() => {
+                            console.log("📄 Intentando descargar nombramiento");
+                            console.log("Datos del archivo:", {
+                              existe: !!actas.nombramiento.archivo_documento,
+                              longitud: actas.nombramiento.archivo_documento?.length,
+                              primeros20: actas.nombramiento.archivo_documento?.substring(0, 20)
+                            });
+                            descargarArchivo(
+                              actas.nombramiento.archivo_documento,
+                              `nombramiento_${afiliado.cedula}.pdf`,
+                              'application/pdf'
+                            );
+                          }}
+                        >
+                          📥 Descargar Documento
+                        </button>
+                        <p style={{ fontSize: "12px", color: "#666", marginTop: "8px" }}>
+                          Archivo disponible ({actas.nombramiento.archivo_documento.length} caracteres)
+                        </p>
+                      </div>
+                    ) : (
+                      <p className="no-data">No hay archivo adjunto</p>
                     )}
                   </div>
                 ) : (
@@ -359,17 +401,32 @@ export const ModalVerAfiliado = ({ isOpen, onClose, afiliadoId }) => {
                         <span className="info-value">{formatearFecha(actas.posesion.fecha_acta)}</span>
                       </div>
                     </div>
-                    {actas.posesion.documento_acta && (
-                      <button 
-                        className="btn-download"
-                        onClick={() => descargarArchivo(
-                          actas.posesion.documento_acta,
-                          `posesion_${afiliado.cedula}.pdf`,
-                          'application/pdf'
-                        )}
-                      >
-                        📥 Descargar Documento
-                      </button>
+                    {actas.posesion.documento_acta ? (
+                      <div style={{ marginTop: "15px" }}>
+                        <button 
+                          className="btn-download"
+                          onClick={() => {
+                            console.log("📄 Intentando descargar posesión");
+                            console.log("Datos del archivo:", {
+                              existe: !!actas.posesion.documento_acta,
+                              longitud: actas.posesion.documento_acta?.length,
+                              primeros20: actas.posesion.documento_acta?.substring(0, 20)
+                            });
+                            descargarArchivo(
+                              actas.posesion.documento_acta,
+                              `posesion_${afiliado.cedula}.pdf`,
+                              'application/pdf'
+                            );
+                          }}
+                        >
+                          📥 Descargar Documento
+                        </button>
+                        <p style={{ fontSize: "12px", color: "#666", marginTop: "8px" }}>
+                          Archivo disponible ({actas.posesion.documento_acta.length} caracteres)
+                        </p>
+                      </div>
+                    ) : (
+                      <p className="no-data">No hay archivo adjunto</p>
                     )}
                   </div>
                 ) : (
@@ -385,18 +442,33 @@ export const ModalVerAfiliado = ({ isOpen, onClose, afiliadoId }) => {
                       <img 
                         src={`data:image/jpeg;base64,${afiliado.foto_afiliado}`}
                         alt="Foto del afiliado"
+                        onError={(e) => {
+                          console.error("Error cargando imagen");
+                          e.target.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Crect fill='%23ddd' width='200' height='200'/%3E%3Ctext x='50%25' y='50%25' text-anchor='middle' dy='.3em' fill='%23999'%3ESin imagen%3C/text%3E%3C/svg%3E";
+                        }}
                       />
                     </div>
                     <button 
                       className="btn-download"
-                      onClick={() => descargarArchivo(
-                        afiliado.foto_afiliado,
-                        `foto_${afiliado.cedula}.jpg`,
-                        'image/jpeg'
-                      )}
+                      onClick={() => {
+                        console.log("📷 Intentando descargar foto");
+                        console.log("Datos de la foto:", {
+                          existe: !!afiliado.foto_afiliado,
+                          longitud: afiliado.foto_afiliado?.length,
+                          primeros20: afiliado.foto_afiliado?.substring(0, 20)
+                        });
+                        descargarArchivo(
+                          afiliado.foto_afiliado,
+                          `foto_${afiliado.cedula}.jpg`,
+                          'image/jpeg'
+                        );
+                      }}
                     >
                       📥 Descargar Foto
                     </button>
+                    <p style={{ fontSize: "12px", color: "#666", marginTop: "8px" }}>
+                      Foto disponible ({afiliado.foto_afiliado.length} caracteres)
+                    </p>
                   </div>
                 </div>
               )}
