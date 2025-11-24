@@ -58,6 +58,12 @@ export const getAfiliadoById = async (id) => {
     WHERE a.id_afiliado = ?
   `;
   const [afiliados] = await db.query(query, [id]);
+  
+  // Convertir BLOB a Base64 para foto
+  if (afiliados[0] && afiliados[0].foto_afiliado) {
+    afiliados[0].foto_afiliado = afiliados[0].foto_afiliado.toString('base64');
+  }
+  
   return afiliados[0];
 };
 
@@ -91,6 +97,12 @@ export const getAfiliadoByCedula = async (cedula) => {
     WHERE a.cedula = ?
   `;
   const [afiliados] = await db.query(query, [cedula]);
+  
+  // Convertir BLOB a Base64 para foto
+  if (afiliados[0] && afiliados[0].foto_afiliado) {
+    afiliados[0].foto_afiliado = afiliados[0].foto_afiliado.toString('base64');
+  }
+  
   return afiliados[0];
 };
 
@@ -104,6 +116,7 @@ export const createAfiliado = async (data) => {
       // Datos personales
       cedula, nombres, apellidos, religion_id, fecha_nacimiento, fecha_afiliacion,
       direccion_domicilio, municipio_domicilio, municipio_residencia, direccion_residencia,
+      foto_afiliado,
       
       // Seguridad social
       id_cargo, id_eps, id_arl, id_pension, id_cesantias, 
@@ -113,8 +126,8 @@ export const createAfiliado = async (data) => {
       telefono_institucional, direccion_institucion,
       
       // Actas
-      tipo_documento, numero_resolucion, fecha_resolucion,
-      numero_acta, fecha_acta,
+      tipo_documento, numero_resolucion, fecha_resolucion, archivo_nombramiento,
+      numero_acta, fecha_acta, archivo_posesion,
       
       // Rector
       nombre_rector,
@@ -123,20 +136,23 @@ export const createAfiliado = async (data) => {
       otros_cargos
     } = data;
 
+    // Convertir Base64 a Buffer para la foto
+    const fotoBuffer = foto_afiliado ? Buffer.from(foto_afiliado, 'base64') : null;
+
     // 1. Insertar afiliado
     const queryAfiliado = `
       INSERT INTO afiliados 
       (cedula, nombres, apellidos, religion_id, fecha_nacimiento, fecha_afiliacion,
        direccion_domicilio, municipio_domicilio, municipio_residencia, direccion_residencia,
-       id_cargo, id_eps, id_arl, id_pension, id_cesantias, id_institucion, municipio_trabajo)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+       foto_afiliado, id_cargo, id_eps, id_arl, id_pension, id_cesantias, id_institucion, municipio_trabajo)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `;
 
     const [resultAfiliado] = await connection.query(queryAfiliado, [
       cedula, nombres, apellidos, religion_id || null, fecha_nacimiento || null, 
       fecha_afiliacion || null, direccion_domicilio || null, municipio_domicilio || null, 
-      municipio_residencia || null, direccion_residencia || null, id_cargo, 
-      id_eps || null, id_arl || null, id_pension || null, id_cesantias || null, 
+      municipio_residencia || null, direccion_residencia || null, fotoBuffer,
+      id_cargo, id_eps || null, id_arl || null, id_pension || null, id_cesantias || null, 
       id_institucion, municipio_trabajo || null
     ]);
 
@@ -160,37 +176,42 @@ export const createAfiliado = async (data) => {
     }
 
     // 3. Insertar acta de nombramiento si hay datos
-    if (tipo_documento || numero_resolucion || fecha_resolucion) {
+    if (tipo_documento || numero_resolucion || fecha_resolucion || archivo_nombramiento) {
+      const archivoNombramientoBuffer = archivo_nombramiento ? Buffer.from(archivo_nombramiento, 'base64') : null;
+      
       const queryNombramiento = `
         INSERT INTO actas_nombramiento 
-        (id_afiliado, tipo_documento, numero_resolucion, fecha_resolucion)
-        VALUES (?, ?, ?, ?)
+        (id_afiliado, tipo_documento, numero_resolucion, fecha_resolucion, archivo_documento)
+        VALUES (?, ?, ?, ?, ?)
       `;
       await connection.query(queryNombramiento, [
         idAfiliado,
         tipo_documento || null,
         numero_resolucion || null,
-        fecha_resolucion || null
+        fecha_resolucion || null,
+        archivoNombramientoBuffer
       ]);
     }
 
     // 4. Insertar acta de posesión si hay datos
-    if (numero_acta || fecha_acta) {
+    if (numero_acta || fecha_acta || archivo_posesion) {
+      const archivoPosesionBuffer = archivo_posesion ? Buffer.from(archivo_posesion, 'base64') : null;
+      
       const queryPosesion = `
         INSERT INTO actas_posesion 
-        (id_afiliado, numero_acta, fecha_acta)
-        VALUES (?, ?, ?)
+        (id_afiliado, numero_acta, fecha_acta, documento_acta)
+        VALUES (?, ?, ?, ?)
       `;
       await connection.query(queryPosesion, [
         idAfiliado,
         numero_acta || null,
-        fecha_acta || null
+        fecha_acta || null,
+        archivoPosesionBuffer
       ]);
     }
 
     // 5. Insertar rector si se proporciona
     if (nombre_rector && id_institucion) {
-      // Verificar si ya existe un rector para esta institución
       const [rectoresExistentes] = await connection.query(
         'SELECT id_rector FROM rectores WHERE id_institucion = ?',
         [id_institucion]
@@ -242,7 +263,6 @@ export const updateAfiliado = async (id, data) => {
   try {
     await connection.beginTransaction();
 
-    // Construir query dinámicamente con los campos proporcionados
     const camposAfiliado = [];
     const valoresAfiliado = [];
 
@@ -260,35 +280,16 @@ export const updateAfiliado = async (id, data) => {
       }
     }
 
+    // Manejar foto si existe
+    if (data.foto_afiliado) {
+      camposAfiliado.push('foto_afiliado = ?');
+      valoresAfiliado.push(Buffer.from(data.foto_afiliado, 'base64'));
+    }
+
     if (camposAfiliado.length > 0) {
       const queryAfiliado = `UPDATE afiliados SET ${camposAfiliado.join(', ')} WHERE id_afiliado = ?`;
       valoresAfiliado.push(id);
       await connection.query(queryAfiliado, valoresAfiliado);
-    }
-
-    // Actualizar institución si es necesario
-    if (data.id_institucion && (data.correo_institucional || data.telefono_institucional || data.direccion_institucion)) {
-      const camposInstitucion = [];
-      const valoresInstitucion = [];
-
-      if (data.correo_institucional) {
-        camposInstitucion.push('correo_institucional = ?');
-        valoresInstitucion.push(data.correo_institucional);
-      }
-      if (data.telefono_institucional) {
-        camposInstitucion.push('telefono_institucional = ?');
-        valoresInstitucion.push(data.telefono_institucional);
-      }
-      if (data.direccion_institucion) {
-        camposInstitucion.push('direccion_institucion = ?');
-        valoresInstitucion.push(data.direccion_institucion);
-      }
-
-      if (camposInstitucion.length > 0) {
-        const queryInstitucion = `UPDATE instituciones_educativas SET ${camposInstitucion.join(', ')} WHERE id_institucion = ?`;
-        valoresInstitucion.push(data.id_institucion);
-        await connection.query(queryInstitucion, valoresInstitucion);
-      }
     }
 
     await connection.commit();
@@ -309,13 +310,11 @@ export const deleteAfiliado = async (id) => {
   try {
     await connection.beginTransaction();
 
-    // Eliminar registros relacionados primero
     await connection.query('DELETE FROM actas_nombramiento WHERE id_afiliado = ?', [id]);
     await connection.query('DELETE FROM actas_posesion WHERE id_afiliado = ?', [id]);
     await connection.query('DELETE FROM otros_cargos WHERE id_afiliado = ?', [id]);
     await connection.query('DELETE FROM cuotas WHERE cedula = (SELECT cedula FROM afiliados WHERE id_afiliado = ?)', [id]);
     
-    // Eliminar afiliado
     const [result] = await connection.query('DELETE FROM afiliados WHERE id_afiliado = ?', [id]);
     
     await connection.commit();
