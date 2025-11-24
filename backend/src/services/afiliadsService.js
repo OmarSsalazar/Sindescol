@@ -136,8 +136,18 @@ export const createAfiliado = async (data) => {
       otros_cargos
     } = data;
 
-    // Convertir Base64 a Buffer para la foto
-    const fotoBuffer = foto_afiliado ? Buffer.from(foto_afiliado, 'base64') : null;
+    // Convertir Base64 a Buffer para la foto (validar que sea string y no objeto vacío)
+    const fotoBuffer = (foto_afiliado && typeof foto_afiliado === 'string' && foto_afiliado.length > 0) 
+      ? Buffer.from(foto_afiliado, 'base64') 
+      : null;
+    
+    console.log('📷 Foto afiliado:', {
+      existe: !!foto_afiliado,
+      tipo: typeof foto_afiliado,
+      esString: typeof foto_afiliado === 'string',
+      longitud: foto_afiliado?.length || 0,
+      buffer: fotoBuffer ? 'creado' : 'null'
+    });
 
     // 1. Insertar afiliado
     const queryAfiliado = `
@@ -177,7 +187,17 @@ export const createAfiliado = async (data) => {
 
     // 3. Insertar acta de nombramiento si hay datos
     if (tipo_documento || numero_resolucion || fecha_resolucion || archivo_nombramiento) {
-      const archivoNombramientoBuffer = archivo_nombramiento ? Buffer.from(archivo_nombramiento, 'base64') : null;
+      const archivoNombramientoBuffer = (archivo_nombramiento && typeof archivo_nombramiento === 'string' && archivo_nombramiento.length > 0)
+        ? Buffer.from(archivo_nombramiento, 'base64') 
+        : null;
+      
+      console.log('📄 Archivo nombramiento:', {
+        existe: !!archivo_nombramiento,
+        tipo: typeof archivo_nombramiento,
+        esString: typeof archivo_nombramiento === 'string',
+        longitud: archivo_nombramiento?.length || 0,
+        buffer: archivoNombramientoBuffer ? 'creado' : 'null'
+      });
       
       const queryNombramiento = `
         INSERT INTO actas_nombramiento 
@@ -195,7 +215,17 @@ export const createAfiliado = async (data) => {
 
     // 4. Insertar acta de posesión si hay datos
     if (numero_acta || fecha_acta || archivo_posesion) {
-      const archivoPosesionBuffer = archivo_posesion ? Buffer.from(archivo_posesion, 'base64') : null;
+      const archivoPosesionBuffer = (archivo_posesion && typeof archivo_posesion === 'string' && archivo_posesion.length > 0)
+        ? Buffer.from(archivo_posesion, 'base64') 
+        : null;
+      
+      console.log('📄 Archivo posesión:', {
+        existe: !!archivo_posesion,
+        tipo: typeof archivo_posesion,
+        esString: typeof archivo_posesion === 'string',
+        longitud: archivo_posesion?.length || 0,
+        buffer: archivoPosesionBuffer ? 'creado' : 'null'
+      });
       
       const queryPosesion = `
         INSERT INTO actas_posesion 
