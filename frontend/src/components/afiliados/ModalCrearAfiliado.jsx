@@ -197,13 +197,50 @@ export const ModalCrearAfiliado = ({ isOpen, onClose, onSubmit }) => {
     }
   };
 
-  const handleChange = (e) => {
-    const { name, value, type, files } = e.target;
+  // Función para convertir archivo a Base64
+const convertirArchivoABase64 = (file) => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = () => {
+      // Remover el prefijo data:image/jpeg;base64, o data:application/pdf;base64,
+      const base64String = reader.result.split(',')[1];
+      resolve(base64String);
+    };
+    reader.onerror = (error) => reject(error);
+  });
+};
+
+const handleChange = async (e) => {
+  const { name, value, type, files } = e.target;
+  
+  if (type === "file" && files && files.length > 0) {
+    const file = files[0];
+    console.log(`📎 Procesando archivo: ${name}`, {
+      nombre: file.name,
+      tipo: file.type,
+      tamaño: file.size
+    });
+
+    try {
+      const base64 = await convertirArchivoABase64(file);
+      console.log(`✅ Archivo ${name} convertido a Base64 (${base64.length} caracteres)`);
+      
+      setFormData((prev) => ({
+        ...prev,
+        [name]: base64, // String, no objeto
+      }));
+    } catch (error) {
+      console.error(`❌ Error convirtiendo archivo ${name}:`, error);
+      alert(`Error al procesar el archivo ${name}`);
+    }
+  } else {
     setFormData((prev) => ({
       ...prev,
-      [name]: type === "file" ? files[0] : value,
+      [name]: value,
     }));
-  };
+  }
+};
 
   const handleOtroCargoChange = (e) => {
     const { name, value } = e.target;

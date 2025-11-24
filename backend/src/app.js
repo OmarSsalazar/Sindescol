@@ -5,8 +5,10 @@ import routes from "./routes/index.js";
 const app = express();
 
 app.use(cors());
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+
+// Aumentar el límite de tamaño del payload para manejar archivos Base64
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
 // Health check
 app.get("/", (req, res) => {
@@ -19,6 +21,17 @@ app.use("/api", routes);
 // Manejo de errores 404
 app.use((req, res) => {
   res.status(404).json({ success: false, error: "Ruta no encontrada" });
+});
+
+// Manejo de errores de payload demasiado grande
+app.use((err, req, res, next) => {
+  if (err.type === 'entity.too.large') {
+    return res.status(413).json({ 
+      success: false, 
+      error: 'El archivo es demasiado grande. El límite es 50MB.' 
+    });
+  }
+  next(err);
 });
 
 export default app;
