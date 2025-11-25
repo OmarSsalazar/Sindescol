@@ -1,0 +1,793 @@
+import { useState, useEffect } from "react";
+import "./ModalCrearAfiliado.css"; // Reutilizamos los estilos
+
+export const ModalEditarAfiliado = ({ isOpen, onClose, afiliadoId, onSubmit }) => {
+  const [activeTab, setActiveTab] = useState("personales");
+  const [loading, setLoading] = useState(false);
+  const [formData, setFormData] = useState({
+    cedula: "",
+    nombres: "",
+    apellidos: "",
+    fecha_nacimiento: "",
+    religion_id: "",
+    foto_afiliado: null,
+    direccion_domicilio: "",
+    municipio_domicilio: "",
+    direccion_residencia: "",
+    municipio_residencia: "",
+    id_eps: "",
+    id_arl: "",
+    id_pension: "",
+    id_cesantias: "",
+    id_cargo: "",
+    fecha_afiliacion: "",
+    municipio_trabajo: "",
+    id_institucion: "",
+    correo_institucional: "",
+    telefono_institucional: "",
+    direccion_institucion: "",
+    nombre_rector: "",
+    tipo_documento: "",
+    numero_resolucion: "",
+    fecha_resolucion: "",
+    archivo_nombramiento: null,
+    numero_acta: "",
+    fecha_acta: "",
+    archivo_posesion: null,
+    otros_cargos: []
+  });
+
+  const [otroCargo, setOtroCargo] = useState({
+    nombre_cargo: "",
+    fecha_inicio: "",
+    fecha_fin: ""
+  });
+
+  const [opciones, setOpciones] = useState({
+    religiones: [],
+    municipios: [],
+    eps: [],
+    arl: [],
+    pension: [],
+    cesantias: [],
+    cargos: [],
+    instituciones: [],
+  });
+
+  useEffect(() => {
+    if (isOpen && afiliadoId) {
+      cargarDatosAfiliado();
+      cargarOpciones();
+    }
+  }, [isOpen, afiliadoId]);
+
+  const cargarDatosAfiliado = async () => {
+    setLoading(true);
+    try {
+      // Cargar datos del afiliado
+      const response = await fetch(`/api/afiliados/${afiliadoId}`);
+      const data = await response.json();
+      
+      if (data.success) {
+        const afiliado = data.data;
+        const formatFecha = (fecha) => {
+          if (!fecha) return "";
+          const date = new Date(fecha);
+          return date.toISOString().split('T')[0];
+        };
+
+        setFormData({
+          cedula: afiliado.cedula || "",
+          nombres: afiliado.nombres || "",
+          apellidos: afiliado.apellidos || "",
+          fecha_nacimiento: formatFecha(afiliado.fecha_nacimiento),
+          religion_id: afiliado.religion_id || "",
+          foto_afiliado: null,
+          direccion_domicilio: afiliado.direccion_domicilio || "",
+          municipio_domicilio: afiliado.municipio_domicilio || "",
+          direccion_residencia: afiliado.direccion_residencia || "",
+          municipio_residencia: afiliado.municipio_residencia || "",
+          id_eps: afiliado.id_eps || "",
+          id_arl: afiliado.id_arl || "",
+          id_pension: afiliado.id_pension || "",
+          id_cesantias: afiliado.id_cesantias || "",
+          id_cargo: afiliado.id_cargo || "",
+          fecha_afiliacion: formatFecha(afiliado.fecha_afiliacion),
+          municipio_trabajo: afiliado.municipio_trabajo || "",
+          id_institucion: afiliado.id_institucion || "",
+          correo_institucional: afiliado.correo_institucional || "",
+          telefono_institucional: afiliado.telefono_institucional || "",
+          direccion_institucion: afiliado.direccion_institucion || "",
+          nombre_rector: "",
+          tipo_documento: "",
+          numero_resolucion: "",
+          fecha_resolucion: "",
+          archivo_nombramiento: null,
+          numero_acta: "",
+          fecha_acta: "",
+          archivo_posesion: null,
+          otros_cargos: []
+        });
+      }
+
+      // Cargar actas de nombramiento
+      const responseNombramiento = await fetch(`/api/actas/nombramiento/${afiliadoId}`);
+      const dataNombramiento = await responseNombramiento.json();
+      if (dataNombramiento.success && dataNombramiento.data.length > 0) {
+        const acta = dataNombramiento.data[0];
+        const formatFecha = (fecha) => {
+          if (!fecha) return "";
+          const date = new Date(fecha);
+          return date.toISOString().split('T')[0];
+        };
+        
+        setFormData(prev => ({
+          ...prev,
+          tipo_documento: acta.tipo_documento || "",
+          numero_resolucion: acta.numero_resolucion || "",
+          fecha_resolucion: formatFecha(acta.fecha_resolucion)
+        }));
+      }
+
+      // Cargar actas de posesión
+      const responsePosesion = await fetch(`/api/actas/posesion/${afiliadoId}`);
+      const dataPosesion = await responsePosesion.json();
+      if (dataPosesion.success && dataPosesion.data.length > 0) {
+        const acta = dataPosesion.data[0];
+        const formatFecha = (fecha) => {
+          if (!fecha) return "";
+          const date = new Date(fecha);
+          return date.toISOString().split('T')[0];
+        };
+        
+        setFormData(prev => ({
+          ...prev,
+          numero_acta: acta.numero_acta || "",
+          fecha_acta: formatFecha(acta.fecha_acta)
+        }));
+      }
+
+      // Cargar otros cargos
+      const responseOtros = await fetch(`/api/otros-cargos/${afiliadoId}`);
+      const dataOtros = await responseOtros.json();
+      if (dataOtros.success && dataOtros.data) {
+        setFormData(prev => ({
+          ...prev,
+          otros_cargos: dataOtros.data.map(cargo => ({
+            nombre_cargo: cargo.nombre_cargo,
+            fecha_inicio: cargo.fecha_inicio ? new Date(cargo.fecha_inicio).toISOString().split('T')[0] : "",
+            fecha_fin: cargo.fecha_fin ? new Date(cargo.fecha_fin).toISOString().split('T')[0] : ""
+          }))
+        }));
+      }
+
+      // Cargar rector (si existe)
+      if (data.success && data.data.id_institucion) {
+        const responseRector = await fetch(`/api/rectores/${data.data.id_institucion}`);
+        const dataRector = await responseRector.json();
+        if (dataRector.success && dataRector.data) {
+          setFormData(prev => ({
+            ...prev,
+            nombre_rector: dataRector.data.nombre_rector || ""
+          }));
+        }
+      }
+
+    } catch (error) {
+      console.error("Error cargando datos del afiliado:", error);
+      alert("Error al cargar los datos del afiliado");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const cargarOpciones = async () => {
+    try {
+      const endpoints = {
+        religiones: "/api/religiones",
+        municipios: "/api/municipios",
+        eps: "/api/eps",
+        arl: "/api/arl",
+        pension: "/api/pension",
+        cesantias: "/api/cesantias",
+        cargos: "/api/cargos",
+        instituciones: "/api/instituciones",
+      };
+
+      const data = {};
+      for (const [key, url] of Object.entries(endpoints)) {
+        try {
+          const response = await fetch(url);
+          if (!response.ok) {
+            data[key] = [];
+            continue;
+          }
+          const text = await response.text();
+          let result;
+          try {
+            result = JSON.parse(text);
+            data[key] = result.data || result || [];
+          } catch (e) {
+            data[key] = [];
+          }
+        } catch (err) {
+          console.error(`Error cargando ${key}:`, err);
+          data[key] = [];
+        }
+      }
+
+      setOpciones(data);
+    } catch (error) {
+      console.error("Error cargando opciones:", error);
+    }
+  };
+
+  const convertirArchivoABase64 = (file) => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => {
+        const base64String = reader.result.split(',')[1];
+        resolve(base64String);
+      };
+      reader.onerror = (error) => reject(error);
+    });
+  };
+
+  const handleChange = async (e) => {
+    const { name, value, type, files } = e.target;
+    
+    if (type === "file" && files && files.length > 0) {
+      const file = files[0];
+      try {
+        const base64 = await convertirArchivoABase64(file);
+        setFormData((prev) => ({
+          ...prev,
+          [name]: base64,
+        }));
+      } catch (error) {
+        console.error(`Error convirtiendo archivo ${name}:`, error);
+        alert(`Error al procesar el archivo ${name}`);
+      }
+    } else {
+      setFormData((prev) => ({
+        ...prev,
+        [name]: value,
+      }));
+    }
+  };
+
+  const handleOtroCargoChange = (e) => {
+    const { name, value } = e.target;
+    setOtroCargo((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  };
+
+  const agregarOtroCargo = () => {
+    if (otroCargo.nombre_cargo && otroCargo.fecha_inicio) {
+      setFormData((prev) => ({
+        ...prev,
+        otros_cargos: [...prev.otros_cargos, otroCargo],
+      }));
+      setOtroCargo({ nombre_cargo: "", fecha_inicio: "", fecha_fin: "" });
+    } else {
+      alert("Por favor completa el nombre del cargo y la fecha de inicio");
+    }
+  };
+
+  const eliminarOtroCargo = (index) => {
+    setFormData((prev) => ({
+      ...prev,
+      otros_cargos: prev.otros_cargos.filter((_, i) => i !== index),
+    }));
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+
+    if (!formData.cedula || !formData.nombres || !formData.apellidos || !formData.id_cargo) {
+      alert("Faltan campos requeridos");
+      return;
+    }
+
+    onSubmit(afiliadoId, formData);
+  };
+
+  if (!isOpen) return null;
+
+  if (loading) {
+    return (
+      <div className="modal-overlay">
+        <div className="modal-content">
+          <div style={{ padding: "40px", textAlign: "center" }}>
+            <p>Cargando datos del afiliado...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="modal-overlay">
+      <div className="modal-content">
+        <div className="modal-header">
+          <h2>Editar Afiliado</h2>
+          <button className="close-btn" onClick={onClose}>×</button>
+        </div>
+
+        <div className="modal-tabs">
+          <button
+            className={`tab-btn ${activeTab === "personales" ? "active" : ""}`}
+            onClick={() => setActiveTab("personales")}
+          >
+            Datos Personales
+          </button>
+          <button
+            className={`tab-btn ${activeTab === "seguridad" ? "active" : ""}`}
+            onClick={() => setActiveTab("seguridad")}
+          >
+            Seguridad Social
+          </button>
+          <button
+            className={`tab-btn ${activeTab === "laborales" ? "active" : ""}`}
+            onClick={() => setActiveTab("laborales")}
+          >
+            Datos Laborales
+          </button>
+        </div>
+
+        <form onSubmit={handleSubmit} className="modal-form">
+          {activeTab === "personales" && (
+            <div className="tab-content">
+              <div className="form-row">
+                <div className="form-group">
+                  <label>Cédula *</label>
+                  <input
+                    type="text"
+                    name="cedula"
+                    value={formData.cedula}
+                    onChange={handleChange}
+                    required
+                    disabled
+                  />
+                </div>
+                <div className="form-group">
+                  <label>Nombres *</label>
+                  <input
+                    type="text"
+                    name="nombres"
+                    value={formData.nombres}
+                    onChange={handleChange}
+                    required
+                  />
+                </div>
+              </div>
+
+              <div className="form-row">
+                <div className="form-group">
+                  <label>Apellidos *</label>
+                  <input
+                    type="text"
+                    name="apellidos"
+                    value={formData.apellidos}
+                    onChange={handleChange}
+                    required
+                  />
+                </div>
+                <div className="form-group">
+                  <label>Fecha de Nacimiento</label>
+                  <input
+                    type="date"
+                    name="fecha_nacimiento"
+                    value={formData.fecha_nacimiento}
+                    onChange={handleChange}
+                  />
+                </div>
+              </div>
+
+              <div className="form-row">
+                <div className="form-group">
+                  <label>Religión</label>
+                  <select
+                    name="religion_id"
+                    value={formData.religion_id}
+                    onChange={handleChange}
+                  >
+                    <option value="">Seleccionar...</option>
+                    {opciones.religiones.map((r) => (
+                      <option key={r.id_religion} value={r.id_religion}>
+                        {r.nombre_religion}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div className="form-group">
+                  <label>Cambiar Foto</label>
+                  <input
+                    type="file"
+                    name="foto_afiliado"
+                    onChange={handleChange}
+                    accept="image/*"
+                  />
+                  <small style={{ color: "#666" }}>Dejar vacío para mantener la foto actual</small>
+                </div>
+              </div>
+
+              <fieldset className="fieldset">
+                <legend>Domicilio</legend>
+                <div className="form-row">
+                  <div className="form-group">
+                    <label>Dirección</label>
+                    <input
+                      type="text"
+                      name="direccion_domicilio"
+                      value={formData.direccion_domicilio}
+                      onChange={handleChange}
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label>Municipio</label>
+                    <input
+                      type="text"
+                      name="municipio_domicilio"
+                      value={formData.municipio_domicilio}
+                      onChange={handleChange}
+                    />
+                  </div>
+                </div>
+              </fieldset>
+
+              <fieldset className="fieldset">
+                <legend>Residencia</legend>
+                <div className="form-row">
+                  <div className="form-group">
+                    <label>Dirección</label>
+                    <input
+                      type="text"
+                      name="direccion_residencia"
+                      value={formData.direccion_residencia}
+                      onChange={handleChange}
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label>Municipio</label>
+                    <input
+                      type="text"
+                      name="municipio_residencia"
+                      value={formData.municipio_residencia}
+                      onChange={handleChange}
+                    />
+                  </div>
+                </div>
+              </fieldset>
+            </div>
+          )}
+
+          {activeTab === "seguridad" && (
+            <div className="tab-content">
+              <div className="form-row">
+                <div className="form-group">
+                  <label>EPS</label>
+                  <select name="id_eps" value={formData.id_eps} onChange={handleChange}>
+                    <option value="">Seleccionar...</option>
+                    {opciones.eps.map((e) => (
+                      <option key={e.id_eps} value={e.id_eps}>{e.nombre_eps}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="form-group">
+                  <label>ARL</label>
+                  <select name="id_arl" value={formData.id_arl} onChange={handleChange}>
+                    <option value="">Seleccionar...</option>
+                    {opciones.arl.map((a) => (
+                      <option key={a.id_arl} value={a.id_arl}>{a.nombre_arl}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <div className="form-row">
+                <div className="form-group">
+                  <label>Pensión</label>
+                  <select name="id_pension" value={formData.id_pension} onChange={handleChange}>
+                    <option value="">Seleccionar...</option>
+                    {opciones.pension.map((p) => (
+                      <option key={p.id_pension} value={p.id_pension}>{p.nombre_pension}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="form-group">
+                  <label>Cesantías</label>
+                  <select name="id_cesantias" value={formData.id_cesantias} onChange={handleChange}>
+                    <option value="">Seleccionar...</option>
+                    {opciones.cesantias.map((c) => (
+                      <option key={c.id_cesantias} value={c.id_cesantias}>{c.nombre_cesantias}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {activeTab === "laborales" && (
+            <div className="tab-content">
+              <fieldset className="fieldset">
+                <legend>Información Básica</legend>
+                <div className="form-row">
+                  <div className="form-group">
+                    <label>Cargo *</label>
+                    <select name="id_cargo" value={formData.id_cargo} onChange={handleChange} required>
+                      <option value="">Seleccionar...</option>
+                      {opciones.cargos.map((c) => (
+                        <option key={c.id_cargo} value={c.id_cargo}>{c.nombre_cargo}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="form-group">
+                    <label>Fecha de Afiliación</label>
+                    <input
+                      type="date"
+                      name="fecha_afiliacion"
+                      value={formData.fecha_afiliacion}
+                      onChange={handleChange}
+                    />
+                  </div>
+                </div>
+                <div className="form-row">
+                  <div className="form-group">
+                    <label>Municipio de Trabajo</label>
+                    <select name="municipio_trabajo" value={formData.municipio_trabajo} onChange={handleChange}>
+                      <option value="">Seleccionar...</option>
+                      {opciones.municipios.map((m) => (
+                        <option key={m.id_municipio} value={m.id_municipio}>{m.nombre_municipio}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+              </fieldset>
+
+              {/* ACTAS DE NOMBRAMIENTO */}
+              <fieldset className="fieldset">
+                <legend>Acta de Nombramiento</legend>
+                <div className="form-row">
+                  <div className="form-group">
+                    <label>Tipo de Documento</label>
+                    <select name="tipo_documento" value={formData.tipo_documento} onChange={handleChange}>
+                      <option value="">Seleccionar...</option>
+                      <option value="Resolución">Resolución</option>
+                      <option value="Decreto">Decreto</option>
+                    </select>
+                  </div>
+                  <div className="form-group">
+                    <label>Número de Resolución/Decreto</label>
+                    <input
+                      type="text"
+                      name="numero_resolucion"
+                      value={formData.numero_resolucion}
+                      onChange={handleChange}
+                      placeholder="Ej: RES-2020-001"
+                    />
+                  </div>
+                </div>
+                <div className="form-row">
+                  <div className="form-group">
+                    <label>Fecha de Resolución/Decreto</label>
+                    <input
+                      type="date"
+                      name="fecha_resolucion"
+                      value={formData.fecha_resolucion}
+                      onChange={handleChange}
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label>Cambiar Archivo</label>
+                    <input
+                      type="file"
+                      name="archivo_nombramiento"
+                      onChange={handleChange}
+                      accept=".pdf,.doc,.docx"
+                    />
+                    <small style={{ color: "#666" }}>Dejar vacío para mantener el archivo actual</small>
+                  </div>
+                </div>
+              </fieldset>
+
+              {/* ACTAS DE POSESIÓN */}
+              <fieldset className="fieldset">
+                <legend>Actas de Posesión</legend>
+                <div className="form-row">
+                  <div className="form-group">
+                    <label>Número de Acta</label>
+                    <input
+                      type="text"
+                      name="numero_acta"
+                      value={formData.numero_acta}
+                      onChange={handleChange}
+                      placeholder="Ej: ACTA-2020-001"
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label>Fecha del Acta</label>
+                    <input
+                      type="date"
+                      name="fecha_acta"
+                      value={formData.fecha_acta}
+                      onChange={handleChange}
+                    />
+                  </div>
+                </div>
+                <div className="form-row">
+                  <div className="form-group">
+                    <label>Cambiar Archivo</label>
+                    <input
+                      type="file"
+                      name="archivo_posesion"
+                      onChange={handleChange}
+                      accept=".pdf,.doc,.docx"
+                    />
+                    <small style={{ color: "#666" }}>Dejar vacío para mantener el archivo actual</small>
+                  </div>
+                </div>
+              </fieldset>
+
+              {/* INSTITUCIÓN EDUCATIVA */}
+              <fieldset className="fieldset">
+                <legend>Institución Educativa</legend>
+                <div className="form-row">
+                  <div className="form-group">
+                    <label>Institución</label>
+                    <select name="id_institucion" value={formData.id_institucion} onChange={handleChange}>
+                      <option value="">Seleccionar...</option>
+                      {opciones.instituciones.map((i) => (
+                        <option key={i.id_institucion} value={i.id_institucion}>{i.nombre_institucion}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="form-group">
+                    <label>Correo Institucional</label>
+                    <input
+                      type="email"
+                      name="correo_institucional"
+                      value={formData.correo_institucional}
+                      onChange={handleChange}
+                    />
+                  </div>
+                </div>
+                <div className="form-row">
+                  <div className="form-group">
+                    <label>Teléfono Institucional</label>
+                    <input
+                      type="tel"
+                      name="telefono_institucional"
+                      value={formData.telefono_institucional}
+                      onChange={handleChange}
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label>Dirección</label>
+                    <input
+                      type="text"
+                      name="direccion_institucion"
+                      value={formData.direccion_institucion}
+                      onChange={handleChange}
+                    />
+                  </div>
+                </div>
+              </fieldset>
+
+              {/* RECTOR */}
+              <fieldset className="fieldset">
+                <legend>Rector</legend>
+                <div className="form-row">
+                  <div className="form-group">
+                    <label>Nombre del Rector</label>
+                    <input
+                      type="text"
+                      name="nombre_rector"
+                      value={formData.nombre_rector}
+                      onChange={handleChange}
+                      placeholder="Ej: Dr. Carlos Mendoza"
+                    />
+                  </div>
+                </div>
+              </fieldset>
+
+              {/* OTROS CARGOS */}
+              <fieldset className="fieldset">
+                <legend>Otros Cargos</legend>
+                <div className="form-group">
+                  <label>Nombre del Cargo</label>
+                  <input
+                    type="text"
+                    name="nombre_cargo"
+                    value={otroCargo.nombre_cargo}
+                    onChange={handleOtroCargoChange}
+                    placeholder="Ej: Auxiliar de Sistemas"
+                  />
+                </div>
+
+                <div className="form-row">
+                  <div className="form-group">
+                    <label>Fecha de Inicio</label>
+                    <input
+                      type="date"
+                      name="fecha_inicio"
+                      value={otroCargo.fecha_inicio}
+                      onChange={handleOtroCargoChange}
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label>Fecha de Fin</label>
+                    <input
+                      type="date"
+                      name="fecha_fin"
+                      value={otroCargo.fecha_fin}
+                      onChange={handleOtroCargoChange}
+                    />
+                  </div>
+                  <div className="form-group" style={{ display: "flex", alignItems: "flex-end" }}>
+                    <button
+                      type="button"
+                      className="btn-submit"
+                      onClick={agregarOtroCargo}
+                      style={{ width: "100%" }}
+                    >
+                      + Agregar Cargo
+                    </button>
+                  </div>
+                </div>
+
+                {formData.otros_cargos.length > 0 && (
+                  <div style={{ marginTop: "1rem" }}>
+                    <h4 style={{ fontSize: "14px", marginBottom: "0.5rem" }}>Cargos Actuales:</h4>
+                    {formData.otros_cargos.map((cargo, index) => (
+                      <div
+                        key={index}
+                        style={{
+                          background: "#f5f5f5",
+                          padding: "0.75rem",
+                          borderRadius: "4px",
+                          marginBottom: "0.5rem",
+                          display: "flex",
+                          justifyContent: "space-between",
+                          alignItems: "center"
+                        }}
+                      >
+                        <div>
+                          <strong>{cargo.nombre_cargo}</strong>
+                          <br />
+                          <small>
+                            {cargo.fecha_inicio} - {cargo.fecha_fin || "Actual"}
+                          </small>
+                        </div>
+                        <button
+                          type="button"
+                          className="btn-cancel"
+                          onClick={() => eliminarOtroCargo(index)}
+                          style={{ padding: "0.5rem 1rem" }}
+                        >
+                          Eliminar
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </fieldset>
+            </div>
+          )}
+
+          <div className="modal-footer">
+            <button type="button" className="btn-cancel" onClick={onClose}>
+              Cancelar
+            </button>
+            <button type="submit" className="btn-submit">
+              Guardar Cambios
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+};

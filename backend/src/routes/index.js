@@ -3,7 +3,7 @@ import express from "express";
 // Importar todas las rutas
 let afiliadsRoutes, cargosRoutes, cuotasRoutes, salariosDepartamentosRoutes;
 let religionesRoutes, municipiosRoutes, epsRoutes, arlRoutes, pensionRoutes, cesantiasRoutes, institucionesRoutes;
-let actasRoutes, otrosCargosRoutes;
+let actasRoutes, otrosCargosRoutes, rectoresRoutes;
 
 try {
   afiliadsRoutes = (await import("./afiliadsRoutes.js")).default;
@@ -96,6 +96,13 @@ try {
   console.error("❌ Error importando otrosCargosRoutes:", err.message);
 }
 
+try {
+  rectoresRoutes = (await import("./rectoresRoutes.js")).default;
+  console.log("✅ rectoresRoutes importado");
+} catch (err) {
+  console.error("❌ Error importando rectoresRoutes:", err.message);
+}
+
 const router = express.Router();
 
 // Registrar todas las rutas
@@ -116,6 +123,7 @@ if (institucionesRoutes) router.use("/instituciones", institucionesRoutes);
 // Rutas de actas y otros cargos
 if (actasRoutes) router.use("/actas", actasRoutes);
 if (otrosCargosRoutes) router.use("/otros-cargos", otrosCargosRoutes);
+if (rectoresRoutes) router.use("/rectores", rectoresRoutes);
 
 console.log("✅ Todas las rutas cargadas");
 
