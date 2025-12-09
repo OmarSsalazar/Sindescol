@@ -5,6 +5,7 @@ export const ModalVerAfiliado = ({ isOpen, onClose, afiliadoId }) => {
   const [activeTab, setActiveTab] = useState("personales");
   const [afiliado, setAfiliado] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [salarioCalculado, setSalarioCalculado] = useState(null);
   const [actas, setActas] = useState({
     nombramiento: null,
     posesion: null
@@ -16,6 +17,29 @@ export const ModalVerAfiliado = ({ isOpen, onClose, afiliadoId }) => {
       cargarDatosAfiliado();
     }
   }, [isOpen, afiliadoId]);
+
+  // Cargar salario cuando se cargue el afiliado
+  useEffect(() => {
+    const cargarSalario = async () => {
+      if (afiliado?.id_cargo && afiliado?.municipio_trabajo) {
+        try {
+          const response = await fetch(`/api/salarios?id_cargo=${afiliado.id_cargo}&id_municipio=${afiliado.municipio_trabajo}`);
+          const data = await response.json();
+          
+          if (data.success && data.data.length > 0) {
+            setSalarioCalculado(data.data[0].salario);
+          } else {
+            setSalarioCalculado(null);
+          }
+        } catch (error) {
+          console.error("Error consultando salario:", error);
+          setSalarioCalculado(null);
+        }
+      }
+    };
+
+    cargarSalario();
+  }, [afiliado]);
 
   const cargarDatosAfiliado = async () => {
     setLoading(true);
@@ -289,6 +313,12 @@ export const ModalVerAfiliado = ({ isOpen, onClose, afiliadoId }) => {
                   <div className="info-item">
                     <span className="info-label">Municipio de Trabajo:</span>
                     <span className="info-value">{afiliado.municipio_trabajo_nombre || "N/A"}</span>
+                  </div>
+                  <div className="info-item">
+                    <span className="info-label">Salario:</span>
+                    <span className="info-value" style={{ color: "var(--primary-blue)", fontWeight: "bold" }}>
+                      {salarioCalculado ? `$${salarioCalculado.toLocaleString()}` : "N/A"}
+                    </span>
                   </div>
                 </div>
               </div>

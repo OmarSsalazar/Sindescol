@@ -20,6 +20,7 @@ export const deleteAfiliado = (id) => api.delete(`/afiliados/${id}`);
 // CARGOS
 export const getCargos = () => api.get("/cargos");
 export const getCargoById = (id) => api.get(`/cargos/${id}`);
+export const getMunicipiosByCargo = (id) => api.get(`/cargos/${id}/municipios`);
 export const createCargo = (data) => api.post("/cargos", data);
 export const updateCargo = (id, data) => api.put(`/cargos/${id}`, data);
 export const deleteCargo = (id) => api.delete(`/cargos/${id}`);

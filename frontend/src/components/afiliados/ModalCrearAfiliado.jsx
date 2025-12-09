@@ -10,60 +10,41 @@ export const ModalCrearAfiliado = ({ isOpen, onClose, onSubmit }) => {
   });
 
   const [formData, setFormData] = useState({
-    // Personales
     cedula: "",
     nombres: "",
     apellidos: "",
     fecha_nacimiento: "",
     religion_id: "",
     foto_afiliado: null,
-
-    // Domicilio
     direccion_domicilio: "",
     municipio_domicilio: "",
-
-    // Residencia
     direccion_residencia: "",
     municipio_residencia: "",
-
-    // Seguridad Social
     id_eps: "",
     id_arl: "",
     id_pension: "",
     id_cesantias: "",
-
-    // Laborales - Básicos
     id_cargo: "",
     fecha_afiliacion: "",
     municipio_trabajo: "",
-
-    // Laborales - Institución
     id_institucion: "",
     correo_institucional: "",
     telefono_institucional: "",
     direccion_institucion: "",
-
-    // Laborales - Rector
     nombre_rector: "",
-
-    // Laborales - Actas de Nombramiento
     tipo_documento: "",
     numero_resolucion: "",
     fecha_resolucion: "",
     archivo_nombramiento: null,
-
-    // Laborales - Actas de Posesión
     numero_acta: "",
     fecha_acta: "",
     archivo_posesion: null,
-
-    // Otros Cargos (array)
     otros_cargos: []
   });
 
-  // Estado para el salario calculado
+  // Estados adicionales
   const [salarioCalculado, setSalarioCalculado] = useState(null);
-  // Estado para otros cargos temporal
+  const [cargandoSalario, setCargandoSalario] = useState(false);
   const [otroCargo, setOtroCargo] = useState({
     nombre_cargo: "",
     fecha_inicio: "",
@@ -86,6 +67,61 @@ export const ModalCrearAfiliado = ({ isOpen, onClose, onSubmit }) => {
       cargarOpciones();
     }
   }, [isOpen]);
+
+  // Efecto para calcular el salario cuando cambian cargo o municipio de trabajo
+  useEffect(() => {
+    const calcularSalario = async () => {
+      if (formData.id_cargo && formData.municipio_trabajo) {
+        try {
+          setCargandoSalario(true);
+          console.log("🔍 Buscando salario para:", {
+            id_cargo: formData.id_cargo,
+            id_municipio: formData.municipio_trabajo
+          });
+
+          const response = await fetch(`/api/salarios?id_cargo=${formData.id_cargo}&id_municipio=${formData.municipio_trabajo}`);
+          
+          if (!response.ok) {
+            console.log("No se encontró salario para esta combinación");
+            setSalarioCalculado(null);
+            setCargandoSalario(false);
+            return;
+          }
+
+          const data = await response.json();
+          console.log("📊 Respuesta del servidor:", data);
+
+          if (data.success && data.data && data.data.length > 0) {
+            const salario = data.data.find(s => 
+              parseInt(s.id_cargo) === parseInt(formData.id_cargo) && 
+              parseInt(s.id_municipio) === parseInt(formData.municipio_trabajo)
+            );
+            
+            if (salario) {
+              console.log("✅ Salario encontrado:", salario.salario);
+              setSalarioCalculado(salario.salario);
+            } else {
+              console.log("⚠️ No hay salario definido para esta combinación");
+              setSalarioCalculado(null);
+            }
+          } else {
+            console.log("⚠️ No hay datos en la respuesta");
+            setSalarioCalculado(null);
+          }
+        } catch (error) {
+          console.error("❌ Error calculando salario:", error);
+          setSalarioCalculado(null);
+        } finally {
+          setCargandoSalario(false);
+        }
+      } else {
+        setSalarioCalculado(null);
+        setCargandoSalario(false);
+      }
+    };
+
+    calcularSalario();
+  }, [formData.id_cargo, formData.municipio_trabajo]);
 
   const cargarOpciones = async () => {
     try {
@@ -129,7 +165,6 @@ export const ModalCrearAfiliado = ({ isOpen, onClose, onSubmit }) => {
     }
   };
 
-  // Validar campos requeridos por pestaña
   const validarPestana = (pestana) => {
     if (pestana === "personales") {
       if (!formData.cedula || !formData.nombres || !formData.apellidos) {
@@ -140,7 +175,6 @@ export const ModalCrearAfiliado = ({ isOpen, onClose, onSubmit }) => {
     }
 
     if (pestana === "seguridad") {
-      // La pestaña de seguridad social es opcional, así que siempre es válida
       return true;
     }
 
@@ -155,9 +189,7 @@ export const ModalCrearAfiliado = ({ isOpen, onClose, onSubmit }) => {
     return true;
   };
 
-  // Función para cambiar de pestaña con validación
   const cambiarPestana = (nuevaPestana) => {
-    // Si intenta ir hacia atrás, permitir siempre
     const orden = ["personales", "seguridad", "laborales"];
     const indexActual = orden.indexOf(activeTab);
     const indexNuevo = orden.indexOf(nuevaPestana);
@@ -167,12 +199,10 @@ export const ModalCrearAfiliado = ({ isOpen, onClose, onSubmit }) => {
       return;
     }
 
-    // Si intenta avanzar, validar la pestaña actual
     if (!validarPestana(activeTab)) {
       return;
     }
 
-    // Marcar la pestaña actual como completada
     setCompletedTabs(prev => ({
       ...prev,
       [activeTab]: true
@@ -181,7 +211,6 @@ export const ModalCrearAfiliado = ({ isOpen, onClose, onSubmit }) => {
     setActiveTab(nuevaPestana);
   };
 
-  // Función para avanzar a la siguiente pestaña
   const siguientePestana = () => {
     if (activeTab === "personales") {
       cambiarPestana("seguridad");
@@ -190,7 +219,6 @@ export const ModalCrearAfiliado = ({ isOpen, onClose, onSubmit }) => {
     }
   };
 
-  // Función para retroceder a la pestaña anterior
   const pestanaAnterior = () => {
     if (activeTab === "seguridad") {
       setActiveTab("personales");
@@ -199,50 +227,48 @@ export const ModalCrearAfiliado = ({ isOpen, onClose, onSubmit }) => {
     }
   };
 
-  // Función para convertir archivo a Base64
-const convertirArchivoABase64 = (file) => {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.readAsDataURL(file);
-    reader.onload = () => {
-      // Remover el prefijo data:image/jpeg;base64, o data:application/pdf;base64,
-      const base64String = reader.result.split(',')[1];
-      resolve(base64String);
-    };
-    reader.onerror = (error) => reject(error);
-  });
-};
-
-const handleChange = async (e) => {
-  const { name, value, type, files } = e.target;
-  
-  if (type === "file" && files && files.length > 0) {
-    const file = files[0];
-    console.log(`📎 Procesando archivo: ${name}`, {
-      nombre: file.name,
-      tipo: file.type,
-      tamaño: file.size
+  const convertirArchivoABase64 = (file) => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => {
+        const base64String = reader.result.split(',')[1];
+        resolve(base64String);
+      };
+      reader.onerror = (error) => reject(error);
     });
+  };
 
-    try {
-      const base64 = await convertirArchivoABase64(file);
-      console.log(`✅ Archivo ${name} convertido a Base64 (${base64.length} caracteres)`);
-      
+  const handleChange = async (e) => {
+    const { name, value, type, files } = e.target;
+    
+    if (type === "file" && files && files.length > 0) {
+      const file = files[0];
+      console.log(`📎 Procesando archivo: ${name}`, {
+        nombre: file.name,
+        tipo: file.type,
+        tamaño: file.size
+      });
+
+      try {
+        const base64 = await convertirArchivoABase64(file);
+        console.log(`✅ Archivo ${name} convertido a Base64 (${base64.length} caracteres)`);
+        
+        setFormData((prev) => ({
+          ...prev,
+          [name]: base64,
+        }));
+      } catch (error) {
+        console.error(`❌ Error convirtiendo archivo ${name}:`, error);
+        alert(`Error al procesar el archivo ${name}`);
+      }
+    } else {
       setFormData((prev) => ({
         ...prev,
-        [name]: base64, // String, no objeto
+        [name]: value,
       }));
-    } catch (error) {
-      console.error(`❌ Error convirtiendo archivo ${name}:`, error);
-      alert(`Error al procesar el archivo ${name}`);
     }
-  } else {
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
-  }
-};
+  };
 
   const handleOtroCargoChange = (e) => {
     const { name, value } = e.target;
@@ -274,7 +300,6 @@ const handleChange = async (e) => {
   const handleSubmit = (e) => {
     e.preventDefault();
 
-    // Validar todos los campos requeridos
     if (!formData.cedula || !formData.nombres || !formData.apellidos || !formData.id_cargo) {
       alert("Faltan campos requeridos. Por favor completa todos los pasos.");
       return;
@@ -318,6 +343,7 @@ const handleChange = async (e) => {
       otros_cargos: []
     });
     setOtroCargo({ nombre_cargo: "", fecha_inicio: "", fecha_fin: "" });
+    setSalarioCalculado(null);
     setActiveTab("personales");
     setCompletedTabs({
       personales: false,
@@ -625,22 +651,12 @@ const handleChange = async (e) => {
                     </select>
                   </div>
                   <div className="form-group">
-                    <label>Fecha de Afiliación</label>
-                    <input
-                      type="date"
-                      name="fecha_afiliacion"
-                      value={formData.fecha_afiliacion}
-                      onChange={handleChange}
-                    />
-                  </div>
-                </div>
-                <div className="form-row">
-                  <div className="form-group">
-                    <label>Municipio de Trabajo</label>
+                    <label>Municipio de Trabajo *</label>
                     <select
                       name="municipio_trabajo"
                       value={formData.municipio_trabajo}
                       onChange={handleChange}
+                      required
                     >
                       <option value="">Seleccionar...</option>
                       {opciones.municipios.map((m) => (
@@ -649,6 +665,51 @@ const handleChange = async (e) => {
                         </option>
                       ))}
                     </select>
+                  </div>
+                </div>
+                
+                <div className="form-row">
+                  <div className="form-group">
+                    <label>Fecha de Afiliación</label>
+                    <input
+                      type="date"
+                      name="fecha_afiliacion"
+                      value={formData.fecha_afiliacion}
+                      onChange={handleChange}
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label>💰 Salario Asignado</label>
+                    <input
+                      type="text"
+                      value={
+                        cargandoSalario 
+                          ? "Buscando salario..." 
+                          : salarioCalculado 
+                            ? `$${parseFloat(salarioCalculado).toLocaleString('es-CO', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}` 
+                            : formData.id_cargo && formData.municipio_trabajo 
+                              ? "No hay salario definido" 
+                              : "Seleccione cargo y municipio"
+                      }
+                      disabled
+                      style={{
+                        backgroundColor: '#f5f5f5',
+                        color: salarioCalculado ? '#28a745' : '#666',
+                        fontWeight: salarioCalculado ? 'bold' : 'normal',
+                        fontSize: salarioCalculado ? '16px' : '14px',
+                        cursor: 'not-allowed'
+                      }}
+                    />
+                    {formData.id_cargo && formData.municipio_trabajo && !salarioCalculado && !cargandoSalario && (
+                      <small style={{ color: '#dc3545', marginTop: '4px', display: 'block' }}>
+                        ⚠️ No hay salario configurado para esta combinación
+                      </small>
+                    )}
+                    {salarioCalculado && (
+                      <small style={{ color: '#28a745', marginTop: '4px', display: 'block' }}>
+                        ✅ Salario encontrado en la base de datos
+                      </small>
+                    )}
                   </div>
                 </div>
               </fieldset>

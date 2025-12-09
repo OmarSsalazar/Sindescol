@@ -17,6 +17,7 @@ export default function Navbar() {
           <Link to="/cargos" className={isActive("/cargos")}>Cargos</Link>
           <Link to="/cuotas" className={isActive("/cuotas")}>Cuotas</Link>
           <Link to="/salarios" className={isActive("/salarios")}>Salarios</Link>
+          <Link to="/departamentos" className={isActive("/departamentos")}>Departamentos</Link>
         </div>
       </div>
     </nav>
