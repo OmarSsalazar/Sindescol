@@ -38,6 +38,14 @@ export default function Home() {
             Ir a Salarios
           </a>
         </div>
+
+        <div className="card">
+          <h3 style={{ color: "var(--primary-blue)", marginBottom: "1rem" }}>🗺️ Departamentos</h3>
+          <p>Administra los departamentos y municipios del sistema.</p>
+          <a href="/departamentos" className="btn btn-primary" style={{ marginTop: "1rem" }}>
+            Ir a Departamentos
+          </a>
+        </div>
       </div>
     </div>
   );

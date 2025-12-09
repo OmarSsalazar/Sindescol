@@ -4,6 +4,7 @@ import "./ModalCrearAfiliado.css"; // Reutilizamos los estilos
 export const ModalEditarAfiliado = ({ isOpen, onClose, afiliadoId, onSubmit }) => {
   const [activeTab, setActiveTab] = useState("personales");
   const [loading, setLoading] = useState(false);
+  const [salarioCalculado, setSalarioCalculado] = useState(null);
   const [formData, setFormData] = useState({
     cedula: "",
     nombres: "",
@@ -60,6 +61,31 @@ export const ModalEditarAfiliado = ({ isOpen, onClose, afiliadoId, onSubmit }) =
       cargarOpciones();
     }
   }, [isOpen, afiliadoId]);
+
+  // Calcular salario cuando cambie el cargo o municipio en edición
+  useEffect(() => {
+    const calcularSalario = async () => {
+      if (formData.id_cargo && formData.municipio_trabajo) {
+        try {
+          const response = await fetch(`/api/salarios?id_cargo=${formData.id_cargo}&id_municipio=${formData.municipio_trabajo}`);
+          const data = await response.json();
+          
+          if (data.success && data.data.length > 0) {
+            setSalarioCalculado(data.data[0].salario);
+          } else {
+            setSalarioCalculado(null);
+          }
+        } catch (error) {
+          console.error("Error consultando salario:", error);
+          setSalarioCalculado(null);
+        }
+      } else {
+        setSalarioCalculado(null);
+      }
+    };
+
+    calcularSalario();
+  }, [formData.id_cargo, formData.municipio_trabajo]);
 
   const cargarDatosAfiliado = async () => {
     setLoading(true);
@@ -544,6 +570,20 @@ export const ModalEditarAfiliado = ({ isOpen, onClose, afiliadoId, onSubmit }) =
                         <option key={m.id_municipio} value={m.id_municipio}>{m.nombre_municipio}</option>
                       ))}
                     </select>
+                  </div>
+                  <div className="form-group">
+                    <label>Salario Asociado</label>
+                    <input
+                      type="text"
+                      value={salarioCalculado ? `$${salarioCalculado.toLocaleString()}` : "Selecciona cargo y municipio"}
+                      disabled
+                      style={{
+                        background: "#f0f0f0",
+                        color: "#333",
+                        fontWeight: "bold",
+                        cursor: "not-allowed"
+                      }}
+                    />
                   </div>
                 </div>
               </fieldset>

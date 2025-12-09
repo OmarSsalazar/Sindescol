@@ -4,7 +4,13 @@ import express from "express";
 let afiliadsRoutes, cargosRoutes, cuotasRoutes, salariosDepartamentosRoutes;
 let religionesRoutes, municipiosRoutes, epsRoutes, arlRoutes, pensionRoutes, cesantiasRoutes, institucionesRoutes;
 let actasRoutes, otrosCargosRoutes, rectoresRoutes;
-
+let departamentosRoutes;
+try {
+  departamentosRoutes = (await import("./departamentosRoutes.js")).default;
+  console.log("✅ departamentosRoutes importado");
+} catch (err) {
+  console.error("❌ Error importando departamentosRoutes:", err.message);
+}
 try {
   afiliadsRoutes = (await import("./afiliadsRoutes.js")).default;
   console.log("✅ afiliadsRoutes importado");
@@ -124,6 +130,9 @@ if (institucionesRoutes) router.use("/instituciones", institucionesRoutes);
 if (actasRoutes) router.use("/actas", actasRoutes);
 if (otrosCargosRoutes) router.use("/otros-cargos", otrosCargosRoutes);
 if (rectoresRoutes) router.use("/rectores", rectoresRoutes);
+
+// Rutas de departamentos
+if (departamentosRoutes) router.use("/departamentos", departamentosRoutes);
 
 console.log("✅ Todas las rutas cargadas");
 

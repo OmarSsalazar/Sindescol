@@ -5,6 +5,7 @@ import Afiliados from "./pages/Afiliados";
 import Cargos from "./pages/Cargos";
 import Cuotas from "./pages/Cuotas";
 import Salarios from "./pages/Salarios";
+import Departamentos from "./pages/Departamentos";
 import "./styles/global.css";
 
 function App() {
@@ -22,6 +23,7 @@ function App() {
         <Route path="/cargos" element={<Cargos />} />
         <Route path="/cuotas" element={<Cuotas />} />
         <Route path="/salarios" element={<Salarios />} />
+        <Route path="/departamentos" element={<Departamentos />} />
       </Routes>
     </Router>
   );

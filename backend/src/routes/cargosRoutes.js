@@ -1,16 +1,13 @@
 import express from "express";
-import db from "../config/db.js";
+import * as cargosController from "../controllers/cargosController.js";
 
 const router = express.Router();
 
-router.get("/", async (req, res) => {
-  try {
-    const [cargos] = await db.query("SELECT * FROM cargos");
-    res.json({ success: true, data: cargos });
-  } catch (error) {
-    console.error("Error:", error);
-    res.status(500).json({ success: false, error: error.message });
-  }
-});
+router.get("/", cargosController.getCargos);
+router.get("/:id", cargosController.getCargoById);
+router.get("/:id/municipios", cargosController.getMunicipiosByCargo);
+router.post("/", cargosController.createCargo);
+router.put("/:id", cargosController.updateCargo);
+router.delete("/:id", cargosController.deleteCargo);
 
 export default router;
