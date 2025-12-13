@@ -56,24 +56,27 @@ export default function Departamentos() {
     }
   };
 
-  const toggleDepartamento = (departamento) => {
-    const depto = departamento.departamento;
+  const toggleDepartamento = (nombreDepartamento) => {
+    console.log("Toggle departamento:", nombreDepartamento);
+    console.log("Estado actual:", departamentosExpandidos);
     
-    if (departamentosExpandidos[depto]) {
+    if (departamentosExpandidos[nombreDepartamento]) {
       // Si ya está expandido, colapsarlo
-      setDepartamentosExpandidos(prev => ({
-        ...prev,
-        [depto]: false
-      }));
+      setDepartamentosExpandidos(prev => {
+        const nuevo = { ...prev, [nombreDepartamento]: false };
+        console.log("Nuevo estado (colapsando):", nuevo);
+        return nuevo;
+      });
     } else {
       // Si está colapsado, expandirlo y cargar municipios
-      setDepartamentosExpandidos(prev => ({
-        ...prev,
-        [depto]: true
-      }));
+      setDepartamentosExpandidos(prev => {
+        const nuevo = { ...prev, [nombreDepartamento]: true };
+        console.log("Nuevo estado (expandiendo):", nuevo);
+        return nuevo;
+      });
       
-      if (!municipiosPorDepartamento[depto]) {
-        cargarMunicipios(depto);
+      if (!municipiosPorDepartamento[nombreDepartamento]) {
+        cargarMunicipios(nombreDepartamento);
       }
     }
   };
@@ -227,56 +230,65 @@ export default function Departamentos() {
         </div>
       ) : (
         <div className="departamentos-grid">
-          {departamentos.map((depto, index) => (
-            <div key={index} className="departamento-card">
-              <div className="departamento-header" onClick={() => toggleDepartamento(depto)}>
-                <h3>📍 {depto.departamento}</h3>
-                <button
-                  className="btn-expand"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    toggleDepartamento(depto);
-                  }}
-                >
-                  {departamentosExpandidos[depto.departamento] ? "▼" : "▶"}
-                </button>
-              </div>
-
-              {departamentosExpandidos[depto.departamento] && (
-                <div className="municipios-lista">
-                  {municipiosPorDepartamento[depto.departamento] ? (
-                    municipiosPorDepartamento[depto.departamento].length > 0 ? (
-                      municipiosPorDepartamento[depto.departamento].map((municipio) => (
-                        <div key={municipio.id_municipio} className="municipio-item">
-                          <span className="municipio-nombre">
-                            🏙️ {municipio.nombre_municipio}
-                          </span>
-                          <div className="municipio-actions">
-                            <button
-                              className="btn btn-warning btn-sm"
-                              onClick={() => abrirModalEditar(municipio)}
-                            >
-                              ✏️
-                            </button>
-                            <button
-                              className="btn btn-danger btn-sm"
-                              onClick={() => handleEliminarMunicipio(municipio.id_municipio, municipio.nombre_municipio)}
-                            >
-                              🗑️
-                            </button>
-                          </div>
-                        </div>
-                      ))
-                    ) : (
-                      <p className="no-municipios">No hay municipios registrados</p>
-                    )
-                  ) : (
-                    <div className="loading-municipios">Cargando municipios...</div>
-                  )}
+          {departamentos.map((depto, index) => {
+            const nombreDepto = depto.departamento;
+            return (
+              <div key={`${nombreDepto}-${index}`} className="departamento-card">
+                <div className="departamento-header" onClick={() => toggleDepartamento(nombreDepto)}>
+                  <h3>📍 {nombreDepto}</h3>
+                  <button
+                    className="btn-expand"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      toggleDepartamento(nombreDepto);
+                    }}
+                  >
+                    {departamentosExpandidos[nombreDepto] ? "▼" : "▶"}
+                  </button>
                 </div>
-              )}
-            </div>
-          ))}
+
+                {departamentosExpandidos[nombreDepto] === true && (
+                  <div className="municipios-lista">
+                    {municipiosPorDepartamento[nombreDepto] ? (
+                      municipiosPorDepartamento[nombreDepto].length > 0 ? (
+                        municipiosPorDepartamento[nombreDepto].map((municipio) => (
+                          <div key={municipio.id_municipio} className="municipio-item">
+                            <span className="municipio-nombre">
+                              🏙️ {municipio.nombre_municipio}
+                            </span>
+                            <div className="municipio-actions">
+                              <button
+                                className="btn btn-warning btn-sm"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  abrirModalEditar(municipio);
+                                }}
+                              >
+                                ✏️
+                              </button>
+                              <button
+                                className="btn btn-danger btn-sm"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleEliminarMunicipio(municipio.id_municipio, municipio.nombre_municipio);
+                                }}
+                              >
+                                🗑️
+                              </button>
+                            </div>
+                          </div>
+                        ))
+                      ) : (
+                        <p className="no-municipios">No hay municipios registrados</p>
+                      )
+                    ) : (
+                      <div className="loading-municipios">Cargando municipios...</div>
+                    )}
+                  </div>
+                )}
+              </div>
+            );
+          })}
         </div>
       )}
 
