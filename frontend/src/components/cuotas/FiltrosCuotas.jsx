@@ -1,45 +1,40 @@
-const meses = ["enero", "febrero", "marzo", "abril", "mayo", "junio",
-  "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"];
+// frontend/src/components/cuotas/FiltrosCuotas.jsx
+export function FiltrosCuotas({ filtros, onChange, onLimpiar }) {
+  // Generar años disponibles (últimos 5 años + próximos 2)
+  const generarAnios = () => {
+    const anioActual = new Date().getFullYear();
+    const anios = [];
+    for (let i = anioActual - 5; i <= anioActual + 2; i++) {
+      anios.push(i);
+    }
+    return anios;
+  };
 
-export function FiltrosCuotas({ filtros, onChange, onLimpiar, totalCuotas }) {
   return (
     <div className="card cuotas-filtros-card">
       <h3 className="cuotas-filtros-title">🔍 Filtros</h3>
       <div className="form-row">
         <div className="form-group">
-          <label>Buscar por Cédula</label>
+          <label>Buscar por Cédula o Nombre</label>
           <input
             type="text"
             name="busqueda"
             value={filtros.busqueda}
             onChange={(e) => onChange(e.target.name, e.target.value)}
-            placeholder="Ingresa cédula..."
+            placeholder="Ingresa cédula o nombre..."
           />
         </div>
         <div className="form-group">
-          <label>Filtrar por Mes</label>
+          <label>Año *</label>
           <select 
-            name="mes" 
-            value={filtros.mes} 
+            name="anio" 
+            value={filtros.anio} 
             onChange={(e) => onChange(e.target.name, e.target.value)}
           >
-            <option value="">Todos los meses</option>
-            {meses.map((mes) => (
-              <option key={mes} value={mes}>
-                {mes.charAt(0).toUpperCase() + mes.slice(1)}
-              </option>
+            {generarAnios().map(anio => (
+              <option key={anio} value={anio}>{anio}</option>
             ))}
           </select>
-        </div>
-        <div className="form-group">
-          <label>Filtrar por Año</label>
-          <input
-            type="number"
-            name="anio"
-            value={filtros.anio}
-            onChange={(e) => onChange(e.target.name, e.target.value)}
-            placeholder="Año..."
-          />
         </div>
       </div>
       <div className="cuotas-filtros-footer">
@@ -50,11 +45,6 @@ export function FiltrosCuotas({ filtros, onChange, onLimpiar, totalCuotas }) {
         >
           🔄 Limpiar Filtros
         </button>
-        {totalCuotas > 0 && (
-          <div className="cuotas-total-badge">
-            💵 Total: ${totalCuotas.toLocaleString()}
-          </div>
-        )}
       </div>
     </div>
   );

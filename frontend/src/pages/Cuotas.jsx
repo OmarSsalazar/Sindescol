@@ -1,14 +1,17 @@
+// frontend/src/pages/Cuotas.jsx
 import { useState, useEffect } from "react";
 import * as api from "../services/api";
-import { procesarArchivoCuotas } from "../utils/procesadorArchivos";
 import { FormularioCargaCuotas } from "../components/cuotas/FormularioCargaCuotas";
-import { TablaCuotas } from "../components/cuotas/TablaCuotas";
 import { FiltrosCuotas } from "../components/cuotas/FiltrosCuotas";
 import { PaginacionControles } from "../components/shared/PaginacionControles";
 import "../styles/cuotas.css";
 
+const MESES = ["enero", "febrero", "marzo", "abril", "mayo", "junio",
+  "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"];
+
 export default function Cuotas() {
   const [cuotas, setCuotas] = useState([]);
+  const [afiliados, setAfiliados] = useState([]);
   const [loading, setLoading] = useState(false);
   const [showForm, setShowForm] = useState(false);
   const [alert, setAlert] = useState(null);
@@ -18,23 +21,37 @@ export default function Cuotas() {
   const [elementosPorPagina, setElementosPorPagina] = useState(20);
   const [filtros, setFiltros] = useState({
     busqueda: "",
-    mes: "",
-    anio: ""
+    anio: new Date().getFullYear()
   });
 
   useEffect(() => {
-    fetchCuotas();
+    cargarDatos();
   }, []);
 
-  const fetchCuotas = async () => {
+  const cargarDatos = async () => {
     setLoading(true);
     try {
-      const { data } = await api.getCuotas();
-      setCuotas(data.data || []);
+      // Cargar cuotas
+      const responseCuotas = await fetch("/api/cuotas");
+      const dataCuotas = await responseCuotas.json();
+      
+      // Cargar afiliados
+      const responseAfiliados = await fetch("/api/afiliados");
+      const dataAfiliados = await responseAfiliados.json();
+
+      if (dataCuotas.success) {
+        setCuotas(dataCuotas.data || []);
+      }
+      
+      if (dataAfiliados.success) {
+        setAfiliados(dataAfiliados.data || []);
+      }
     } catch (error) {
-      showAlert("Error al cargar cuotas", "danger");
+      console.error("Error cargando datos:", error);
+      showAlert("Error al cargar datos", "danger");
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   const handleGuardarCuotas = async (cuotasValidas, mesSeleccionado, anioSeleccionado) => {
@@ -62,7 +79,7 @@ export default function Cuotas() {
       if (exitosas > 0) {
         showAlert(`✅ ${exitosas} cuota(s) guardadas exitosamente${fallidas > 0 ? ` (${fallidas} fallidas)` : ''}`, "success");
         setShowForm(false);
-        fetchCuotas();
+        cargarDatos();
       } else {
         showAlert("No se pudo guardar ninguna cuota", "danger");
       }
@@ -81,7 +98,7 @@ export default function Cuotas() {
   };
 
   const limpiarFiltros = () => {
-    setFiltros({ busqueda: "", mes: "", anio: "" });
+    setFiltros({ busqueda: "", anio: new Date().getFullYear() });
     setPaginaActual(1);
   };
 
@@ -90,29 +107,72 @@ export default function Cuotas() {
     setTimeout(() => setAlert(null), 5000);
   };
 
-  // Filtrar cuotas
-  const cuotasFiltradas = cuotas.filter(cuota => {
+  // Organizar datos por afiliado
+  const organizarDatosPorAfiliado = () => {
+    const datosOrganizados = [];
+
+    afiliados.forEach(afiliado => {
+      const cuotasAfiliado = cuotas.filter(c => 
+        c.cedula === afiliado.cedula && 
+        parseInt(c.anio) === parseInt(filtros.anio)
+      );
+
+      // Crear objeto con cuotas por mes
+      const cuotasPorMes = {};
+      MESES.forEach(mes => {
+        const cuotaMes = cuotasAfiliado.find(c => c.mes === mes);
+        cuotasPorMes[mes] = cuotaMes ? parseFloat(cuotaMes.valor) : null;
+      });
+
+      // Calcular total
+      const total = Object.values(cuotasPorMes).reduce((sum, val) => sum + (val || 0), 0);
+
+      datosOrganizados.push({
+        cedula: afiliado.cedula,
+        nombres: afiliado.nombres,
+        apellidos: afiliado.apellidos,
+        cuotasPorMes,
+        total
+      });
+    });
+
+    return datosOrganizados;
+  };
+
+  // Filtrar datos
+  const datosFiltrados = organizarDatosPorAfiliado().filter(dato => {
     const cumpleBusqueda = !filtros.busqueda || 
-      cuota.cedula?.toString().includes(filtros.busqueda);
-    const cumpleMes = !filtros.mes || cuota.mes === filtros.mes;
-    const cumpleAnio = !filtros.anio || cuota.anio === parseInt(filtros.anio);
+      dato.cedula?.toString().includes(filtros.busqueda) ||
+      dato.nombres?.toLowerCase().includes(filtros.busqueda.toLowerCase()) ||
+      dato.apellidos?.toLowerCase().includes(filtros.busqueda.toLowerCase());
     
-    return cumpleBusqueda && cumpleMes && cumpleAnio;
+    return cumpleBusqueda;
   });
 
   // Paginación
   const indexUltimo = paginaActual * elementosPorPagina;
   const indexPrimero = indexUltimo - elementosPorPagina;
-  const cuotasPaginadas = cuotasFiltradas.slice(indexPrimero, indexUltimo);
-  const totalPaginas = Math.ceil(cuotasFiltradas.length / elementosPorPagina);
+  const datosPaginados = datosFiltrados.slice(indexPrimero, indexUltimo);
+  const totalPaginas = Math.ceil(datosFiltrados.length / elementosPorPagina);
 
   const cambiarPagina = (numeroPagina) => {
     setPaginaActual(numeroPagina);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  // Calcular total
-  const totalCuotasMes = cuotasFiltradas.reduce((sum, c) => sum + (parseFloat(c.valor) || 0), 0);
+  // Calcular totales por mes
+  const calcularTotalesPorMes = () => {
+    const totales = {};
+    MESES.forEach(mes => {
+      totales[mes] = datosFiltrados.reduce((sum, dato) => 
+        sum + (dato.cuotasPorMes[mes] || 0), 0
+      );
+    });
+    return totales;
+  };
+
+  const totalesPorMes = calcularTotalesPorMes();
+  const totalGeneral = Object.values(totalesPorMes).reduce((sum, val) => sum + val, 0);
 
   return (
     <div className="container">
@@ -141,15 +201,14 @@ export default function Cuotas() {
             filtros={filtros}
             onChange={handleFiltroChange}
             onLimpiar={limpiarFiltros}
-            totalCuotas={totalCuotasMes}
           />
 
           <div className="cuotas-info-paginacion">
             <div className="cuotas-info-registros">
-              📊 Mostrando {indexPrimero + 1} - {Math.min(indexUltimo, cuotasFiltradas.length)} de {cuotasFiltradas.length} registros
-              {cuotasFiltradas.length !== cuotas.length && (
+              📊 Mostrando {indexPrimero + 1} - {Math.min(indexUltimo, datosFiltrados.length)} de {datosFiltrados.length} afiliados
+              {datosFiltrados.length !== afiliados.length && (
                 <span className="cuotas-info-filtrados">
-                  (filtrados de {cuotas.length} totales)
+                  (filtrados de {afiliados.length} totales)
                 </span>
               )}
             </div>
@@ -174,25 +233,74 @@ export default function Cuotas() {
 
           {loading ? (
             <div className="loading">Cargando...</div>
-          ) : cuotasFiltradas.length === 0 ? (
+          ) : datosFiltrados.length === 0 ? (
             <div className="empty-state">
               <p>
-                {cuotas.length === 0 
-                  ? "No hay cuotas registradas" 
-                  : "No se encontraron cuotas con los filtros aplicados"}
+                {afiliados.length === 0 
+                  ? "No hay afiliados registrados" 
+                  : "No se encontraron afiliados con los filtros aplicados"}
               </p>
-              {cuotas.length === 0 && (
-                <button className="btn btn-primary" onClick={() => setShowForm(true)}>
-                  Cargar las primeras cuotas
-                </button>
-              )}
             </div>
           ) : (
             <>
-              <TablaCuotas 
-                cuotas={cuotasPaginadas}
-                indexPrimero={indexPrimero}
-              />
+              <div className="cuotas-tabla-horizontal-container">
+                <table className="cuotas-tabla-horizontal">
+                  <thead>
+                    <tr>
+                      <th className="sticky-col">Cédula</th>
+                      <th className="sticky-col-2">Nombres</th>
+                      <th className="sticky-col-3">Apellidos</th>
+                      {MESES.map(mes => (
+                        <th key={mes} className="mes-header">
+                          {mes.charAt(0).toUpperCase() + mes.slice(1)}
+                        </th>
+                      ))}
+                      <th className="total-header">Total {filtros.anio}</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {datosPaginados.map((dato, index) => (
+                      <tr key={dato.cedula}>
+                        <td className="sticky-col">{dato.cedula}</td>
+                        <td className="sticky-col-2">{dato.nombres}</td>
+                        <td className="sticky-col-3">{dato.apellidos}</td>
+                        {MESES.map(mes => (
+                          <td 
+                            key={mes} 
+                            className={`cuota-valor ${
+                              dato.cuotasPorMes[mes] === null 
+                                ? 'sin-cuota' 
+                                : dato.cuotasPorMes[mes] === 0 
+                                  ? 'cuota-cero' 
+                                  : 'cuota-normal'
+                            }`}
+                          >
+                            {dato.cuotasPorMes[mes] === null 
+                              ? '-' 
+                              : `$${dato.cuotasPorMes[mes].toLocaleString()}`}
+                          </td>
+                        ))}
+                        <td className="total-valor">
+                          ${dato.total.toLocaleString()}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                  <tfoot>
+                    <tr className="fila-totales">
+                      <td className="sticky-col" colSpan="3"><strong>Totales del Año</strong></td>
+                      {MESES.map(mes => (
+                        <td key={mes} className="total-mes">
+                          ${totalesPorMes[mes].toLocaleString()}
+                        </td>
+                      ))}
+                      <td className="total-general">
+                        ${totalGeneral.toLocaleString()}
+                      </td>
+                    </tr>
+                  </tfoot>
+                </table>
+              </div>
 
               {totalPaginas > 1 && (
                 <PaginacionControles

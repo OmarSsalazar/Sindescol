@@ -1,4 +1,4 @@
-   import { useState } from "react";
+import { useState } from "react";
 import { procesarArchivoCuotas } from "../../utils/procesadorArchivos";
 import { PreviewCuotas } from "./PreviewCuotas";
 
@@ -12,6 +12,7 @@ export function FormularioCargaCuotas({ onGuardar, loading, showAlert }) {
   const [cuotasPreview, setCuotasPreview] = useState([]);
   const [procesandoArchivo, setProcesandoArchivo] = useState(false);
   const [advertenciasCero, setAdvertenciasCero] = useState([]);
+  const [advertenciasSinValor, setAdvertenciasSinValor] = useState([]);
 
   const handleArchivoChange = async (e) => {
     const file = e.target.files[0];
@@ -27,6 +28,7 @@ export function FormularioCargaCuotas({ onGuardar, loading, showAlert }) {
     setProcesandoArchivo(true);
     setCuotasPreview([]);
     setAdvertenciasCero([]);
+    setAdvertenciasSinValor([]);
 
     try {
       const cuotasConInfo = await procesarArchivoCuotas(file, extension);
@@ -37,12 +39,20 @@ export function FormularioCargaCuotas({ onGuardar, loading, showAlert }) {
         return;
       }
 
-      const conCero = cuotasConInfo.filter(c => parseFloat(c.valor) === 0);
+      // Separar cuotas con valor 0 y sin valor
+      const conCero = cuotasConInfo.filter(c => c.valor === 0 && !c.sinValor);
+      const sinValor = cuotasConInfo.filter(c => c.sinValor || c.valor === null);
+      
       setAdvertenciasCero(conCero);
+      setAdvertenciasSinValor(sinValor);
       setCuotasPreview(cuotasConInfo);
       
       if (conCero.length > 0) {
         showAlert(`⚠️ ${conCero.length} cuota(s) con valor $0 detectadas`, "warning");
+      }
+      
+      if (sinValor.length > 0) {
+        showAlert(`⚠️ ${sinValor.length} cuota(s) SIN valor registrado detectadas`, "warning");
       }
 
     } catch (error) {
@@ -74,6 +84,15 @@ export function FormularioCargaCuotas({ onGuardar, loading, showAlert }) {
       if (!confirmar) return;
     }
 
+    if (advertenciasSinValor.length > 0) {
+      const confirmar = window.confirm(
+        `⚠️ ADVERTENCIA CRÍTICA: ${advertenciasSinValor.length} cédula(s) SIN VALOR registrado:\n` +
+        advertenciasSinValor.map(c => `- ${c.cedula}: ${c.nombres} ${c.apellidos}`).join('\n') +
+        `\n\nEstas cuotas NO se guardarán. ¿Deseas continuar?`
+      );
+      if (!confirmar) return;
+    }
+
     if (advertenciasCero.length > 0) {
       const confirmar = window.confirm(
         `⚠️ ADVERTENCIA: ${advertenciasCero.length} cuota(s) con valor $0:\n` +
@@ -83,7 +102,14 @@ export function FormularioCargaCuotas({ onGuardar, loading, showAlert }) {
       if (!confirmar) return;
     }
 
-    const cuotasValidas = cuotasPreview.filter(c => c.existe);
+    // Filtrar solo cuotas válidas (que existen y tienen valor definido)
+    const cuotasValidas = cuotasPreview.filter(c => c.existe && !c.sinValor && c.valor !== null);
+    
+    if (cuotasValidas.length === 0) {
+      showAlert("No hay cuotas válidas para guardar", "danger");
+      return;
+    }
+
     onGuardar(cuotasValidas, mesSeleccionado, anioSeleccionado);
   };
 
@@ -92,6 +118,7 @@ export function FormularioCargaCuotas({ onGuardar, loading, showAlert }) {
     setMesSeleccionado("");
     setCuotasPreview([]);
     setAdvertenciasCero([]);
+    setAdvertenciasSinValor([]);
     const fileInput = document.getElementById('archivo-cuotas');
     if (fileInput) fileInput.value = '';
   };
@@ -159,6 +186,7 @@ export function FormularioCargaCuotas({ onGuardar, loading, showAlert }) {
             mesSeleccionado={mesSeleccionado} 
             anioSeleccionado={anioSeleccionado} 
             advertenciasCero={advertenciasCero}
+            advertenciasSinValor={advertenciasSinValor}
             onGuardar={handleGuardar}
             onCancelar={resetForm}
             loading={loading}
@@ -166,5 +194,5 @@ export function FormularioCargaCuotas({ onGuardar, loading, showAlert }) {
         )}
       </div>
     </div>
-  );  
-}  
+  );
+}

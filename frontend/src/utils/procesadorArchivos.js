@@ -1,8 +1,4 @@
-// ==========================================
-// frontend/src/utils/procesadorArchivos.js
-// ==========================================
 
-// Importar XLSX desde CDN si no está disponible
 let XLSX;
 
 async function cargarXLSX() {
@@ -116,6 +112,7 @@ async function procesarExcel(file) {
       // Buscar cédula y valor en todas las columnas disponibles
       let cedula = null;
       let valor = null;
+      let valorEncontrado = false;
       
       // Intentar encontrar cédula (primera columna con valor)
       for (let col = 0; col < fila.length; col++) {
@@ -125,12 +122,27 @@ async function procesarExcel(file) {
           } else {
             // El siguiente valor no vacío es el valor de la cuota
             valor = fila[col];
+            valorEncontrado = true;
             break;
           }
         }
       }
       
-      console.log(`🔎 Fila ${i}: Encontrado Cédula="${cedula}", Valor="${valor}"`);
+      console.log(`🔎 Fila ${i}: Encontrado Cédula="${cedula}", Valor="${valor}", ValorEncontrado=${valorEncontrado}`);
+      
+      // Si no se encontró valor, marcar como sin valor
+      if (!valorEncontrado) {
+        console.warn(`⚠️ Fila ${i}: Cédula "${cedula}" sin valor registrado`);
+        if (cedula) {
+          filas.push({ 
+            cedula: cedula, 
+            valor: null, // Valor null indica que no hay valor
+            sinValor: true
+          });
+          console.log(`✅ Fila ${i} agregada con advertencia de sin valor`);
+        }
+        continue;
+      }
       
       // Convertir valor a número
       if (valor !== null && valor !== undefined) {
@@ -151,7 +163,8 @@ async function procesarExcel(file) {
       if (cedula && !isNaN(valor)) {
         filas.push({ 
           cedula: cedula, 
-          valor: valor 
+          valor: valor,
+          sinValor: false
         });
         console.log(`✅ Fila ${i} agregada exitosamente`);
       } else {
@@ -208,14 +221,15 @@ async function procesarCSV(file) {
     
     console.log(`📋 Línea ${i} completa:`, campos);
     
-    if (campos.length < 2) {
-      console.warn(`⚠️ Línea ${i} tiene menos de 2 columnas:`, campos);
+    if (campos.length < 1) {
+      console.warn(`⚠️ Línea ${i} sin datos`);
       continue;
     }
     
     // Buscar primera columna con valor (cédula)
     let cedula = null;
     let valor = null;
+    let valorEncontrado = false;
     
     for (let col = 0; col < campos.length; col++) {
       const campo = campos[col];
@@ -225,15 +239,28 @@ async function procesarCSV(file) {
           cedula = campo;
         } else {
           valor = campo;
+          valorEncontrado = true;
           break;
         }
       }
     }
     
-    console.log(`🔎 Línea ${i}: Cédula="${cedula}", Valor="${valor}"`);
+    console.log(`🔎 Línea ${i}: Cédula="${cedula}", Valor="${valor}", ValorEncontrado=${valorEncontrado}`);
     
     if (!cedula) {
       console.warn(`⚠️ Línea ${i} sin cédula, saltando...`);
+      continue;
+    }
+    
+    // Si no se encontró valor, marcar como sin valor
+    if (!valorEncontrado) {
+      console.warn(`⚠️ Línea ${i}: Cédula "${cedula}" sin valor registrado`);
+      filas.push({ 
+        cedula: cedula, 
+        valor: null, // Valor null indica que no hay valor
+        sinValor: true
+      });
+      console.log(`✅ Línea ${i} agregada con advertencia de sin valor`);
       continue;
     }
     
@@ -256,7 +283,8 @@ async function procesarCSV(file) {
     if (cedula) {
       filas.push({ 
         cedula: cedula, 
-        valor: valorNumerico 
+        valor: valorNumerico,
+        sinValor: false
       });
       console.log(`✅ Línea ${i} agregada exitosamente`);
     }
