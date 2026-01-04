@@ -1,13 +1,15 @@
+// frontend/src/components/cuotas/PreviewCuotas.jsx
 export function PreviewCuotas({ 
   cuotas, 
   mesSeleccionado, 
   anioSeleccionado, 
   advertenciasCero,
+  advertenciasSinValor,
   onGuardar,
   onCancelar,
   loading 
 }) {
-  const cuotasValidas = cuotas.filter(c => c.existe).length;
+  const cuotasValidas = cuotas.filter(c => c.existe && !c.sinValor && c.valor !== null).length;
 
   return (
     <div className="cuotas-preview-container">
@@ -15,7 +17,28 @@ export function PreviewCuotas({
         📊 Vista Previa ({cuotas.length} cuotas detectadas)
       </h4>
       
-      {advertenciasCero.length > 0 && (
+      {/* Advertencias de cuotas sin valor */}
+      {advertenciasSinValor && advertenciasSinValor.length > 0 && (
+        <div className="cuotas-advertencia-sin-valor">
+          <strong>🚫 {advertenciasSinValor.length} Cédula(s) SIN VALOR registrado:</strong>
+          <p style={{ marginTop: '0.5rem', marginBottom: '0.5rem', fontSize: '0.9rem' }}>
+            Estas cuotas <strong>NO se guardarán</strong> porque no tienen ningún valor en la segunda columna.
+          </p>
+          <ul>
+            {advertenciasSinValor.slice(0, 5).map((c, idx) => (
+              <li key={idx}>
+                Cédula {c.cedula} - {c.nombres} {c.apellidos}
+              </li>
+            ))}
+            {advertenciasSinValor.length > 5 && (
+              <li>... y {advertenciasSinValor.length - 5} más</li>
+            )}
+          </ul>
+        </div>
+      )}
+
+      {/* Advertencias de cuotas con valor $0 */}
+      {advertenciasCero && advertenciasCero.length > 0 && (
         <div className="cuotas-advertencia-cero">
           <strong>⚠️ {advertenciasCero.length} Cuota(s) con Valor $0:</strong>
           <ul>
@@ -50,21 +73,33 @@ export function PreviewCuotas({
                 className={
                   !cuota.existe 
                     ? "cuotas-row-error" 
-                    : parseFloat(cuota.valor) === 0 
-                      ? "cuotas-row-warning" 
-                      : ""
+                    : cuota.sinValor || cuota.valor === null
+                      ? "cuotas-row-sin-valor"
+                      : parseFloat(cuota.valor) === 0 
+                        ? "cuotas-row-warning" 
+                        : ""
                 }
               >
                 <td>{cuota.cedula}</td>
                 <td>{cuota.nombres} {cuota.apellidos}</td>
                 <td>{mesSeleccionado}</td>
                 <td>{anioSeleccionado}</td>
-                <td className={parseFloat(cuota.valor) === 0 ? "cuotas-valor-cero" : "cuotas-valor-normal"}>
-                  ${parseFloat(cuota.valor).toLocaleString()}
+                <td className={
+                  cuota.sinValor || cuota.valor === null
+                    ? "cuotas-valor-sin-valor"
+                    : parseFloat(cuota.valor) === 0 
+                      ? "cuotas-valor-cero" 
+                      : "cuotas-valor-normal"
+                }>
+                  {cuota.sinValor || cuota.valor === null 
+                    ? "SIN VALOR" 
+                    : `$${parseFloat(cuota.valor).toLocaleString()}`}
                 </td>
                 <td>
                   {!cuota.existe ? (
                     <span className="cuotas-estado-error">❌ No existe</span>
+                  ) : cuota.sinValor || cuota.valor === null ? (
+                    <span className="cuotas-estado-sin-valor">🚫 Sin valor</span>
                   ) : parseFloat(cuota.valor) === 0 ? (
                     <span className="cuotas-estado-warning">⚠️ Valor $0</span>
                   ) : (
@@ -96,4 +131,4 @@ export function PreviewCuotas({
       </div>
     </div>
   );
-}
+}          

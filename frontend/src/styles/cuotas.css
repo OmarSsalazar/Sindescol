@@ -1,3 +1,4 @@
+/* frontend/src/styles/cuotas.css */
 .cuotas-formulario-card {
   background: var(--light-blue);
   margin-top: 2rem;
@@ -51,6 +52,32 @@
   color: var(--primary-blue);
 }
 
+/* Advertencia sin valor (crítica) */
+.cuotas-advertencia-sin-valor {
+  background: #FFEBEE;
+  border: 2px solid #D32F2F;
+  border-radius: 6px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+}
+
+.cuotas-advertencia-sin-valor strong {
+  color: #B71C1C;
+  display: block;
+  font-size: 1rem;
+}
+
+.cuotas-advertencia-sin-valor ul {
+  margin-top: 0.5rem;
+  margin-bottom: 0;
+  padding-left: 1.5rem;
+}
+
+.cuotas-advertencia-sin-valor li {
+  color: #C62828;
+}
+
+/* Advertencia valor cero */
 .cuotas-advertencia-cero {
   background: #FFF3CD;
   border: 2px solid #FFC107;
@@ -78,14 +105,20 @@
   overflow-y: auto;
 }
 
+/* Filas con diferentes estados */
 .cuotas-row-error {
   background: #FFCDD2 !important;
+}
+
+.cuotas-row-sin-valor {
+  background: #FFEBEE !important;
 }
 
 .cuotas-row-warning {
   background: #FFF3CD !important;
 }
 
+/* Valores */
 .cuotas-valor-normal {
   font-weight: bold;
   color: var(--primary-blue);
@@ -96,12 +129,24 @@
   color: #FF6F00;
 }
 
+.cuotas-valor-sin-valor {
+  font-weight: bold;
+  color: #D32F2F;
+  font-style: italic;
+}
+
 .cuotas-icono-warning {
   margin-left: 0.5rem;
 }
 
+/* Estados */
 .cuotas-estado-error {
   color: #D32F2F;
+  font-weight: bold;
+}
+
+.cuotas-estado-sin-valor {
+  color: #B71C1C;
   font-weight: bold;
 }
 
@@ -124,7 +169,7 @@
 
 /* Filtros */
 .cuotas-filtros-card {
-  margin-top: 2rem;
+  margin-top: 2.5rem;
 }
 
 .cuotas-filtros-title {
@@ -259,5 +304,213 @@
 
   .paginacion-container {
     flex-wrap: wrap;
+  }
+}
+
+.cuotas-tabla-horizontal-container {
+  overflow-x: auto;
+  margin-top: 2rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
+}
+
+.cuotas-tabla-horizontal {
+  width: 100%;
+  border-collapse: collapse;
+  background: white;
+  font-size: 0.9rem;
+}
+
+/* Header */
+.cuotas-tabla-horizontal thead {
+  background: linear-gradient(90deg, #1976D2 0%, #0D47A1 100%);
+  color: white;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.cuotas-tabla-horizontal th {
+  padding: 0.75rem 0.5rem;
+  text-align: center;
+  font-weight: 600;
+  border-right: 1px solid rgba(255, 255, 255, 0.2);
+  white-space: nowrap;
+}
+
+.mes-header {
+  min-width: 90px;
+  font-size: 0.85rem;
+}
+
+.total-header {
+  background: #0D47A1;
+  min-width: 100px;
+  font-weight: 700;
+  border-left: 3px solid #FFC107;
+}
+
+/* Columnas Fijas (sticky) */
+.sticky-col,
+.sticky-col-2,
+.sticky-col-3 {
+  position: sticky;
+  background: linear-gradient(90deg, #1976D2 0%, #0D47A1 100%);
+  z-index: 11;
+  text-align: left;
+}
+
+.sticky-col {
+  left: 0;
+  min-width: 100px;
+  border-right: 2px solid #FFC107;
+}
+
+.sticky-col-2 {
+  left: 100px;
+  min-width: 120px;
+}
+
+.sticky-col-3 {
+  left: 220px;
+  min-width: 120px;
+  border-right: 2px solid #FFC107;
+}
+
+/* Body */
+.cuotas-tabla-horizontal tbody tr {
+  transition: background 0.2s;
+}
+
+.cuotas-tabla-horizontal tbody tr:hover {
+  background: #E3F2FD;
+}
+
+.cuotas-tabla-horizontal tbody tr:nth-child(even) {
+  background: #F8F9FA;
+}
+
+.cuotas-tabla-horizontal tbody tr:nth-child(even):hover {
+  background: #E3F2FD;
+}
+
+.cuotas-tabla-horizontal tbody td {
+  padding: 0.75rem 0.5rem;
+  border-bottom: 1px solid #E0E0E0;
+  border-right: 1px solid #E0E0E0;
+  text-align: center;
+}
+
+.cuotas-tabla-horizontal tbody .sticky-col,
+.cuotas-tabla-horizontal tbody .sticky-col-2,
+.cuotas-tabla-horizontal tbody .sticky-col-3 {
+  background: white;
+  font-weight: 500;
+  border-right: 2px solid #FFC107;
+}
+
+.cuotas-tabla-horizontal tbody tr:nth-child(even) .sticky-col,
+.cuotas-tabla-horizontal tbody tr:nth-child(even) .sticky-col-2,
+.cuotas-tabla-horizontal tbody tr:nth-child(even) .sticky-col-3 {
+  background: #F8F9FA;
+}
+
+.cuotas-tabla-horizontal tbody tr:hover .sticky-col,
+.cuotas-tabla-horizontal tbody tr:hover .sticky-col-2,
+.cuotas-tabla-horizontal tbody tr:hover .sticky-col-3 {
+  background: #E3F2FD;
+}
+
+/* Valores de cuotas */
+.cuota-valor {
+  font-weight: 600;
+}
+
+.cuota-normal {
+  color: #1976D2;
+}
+
+.cuota-cero {
+  color: #FF6F00;
+  font-style: italic;
+}
+
+.sin-cuota {
+  color: #BDBDBD;
+  font-style: italic;
+}
+
+.total-valor {
+  background: #FFF3CD;
+  color: #1976D2;
+  font-weight: 700;
+  font-size: 1rem;
+  border-left: 3px solid #FFC107;
+}
+
+/* Footer - Totales */
+.cuotas-tabla-horizontal tfoot {
+  background: linear-gradient(90deg, #FFC107 0%, #FFA000 100%);
+  font-weight: 700;
+  position: sticky;
+  bottom: 0;
+  z-index: 10;
+}
+
+.fila-totales td {
+  padding: 1rem 0.5rem;
+  text-align: center;
+  color: #1A237E;
+  border-right: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.fila-totales .sticky-col {
+  background: linear-gradient(90deg, #FFC107 0%, #FFA000 100%);
+  text-align: left;
+  border-right: 2px solid #1A237E;
+}
+
+.total-mes {
+  font-size: 0.95rem;
+}
+
+.total-general {
+  background: #FF6F00;
+  color: white;
+  font-size: 1.1rem;
+  border-left: 3px solid #1A237E;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .cuotas-tabla-horizontal {
+    font-size: 0.75rem;
+  }
+
+  .cuotas-tabla-horizontal th,
+  .cuotas-tabla-horizontal td {
+    padding: 0.5rem 0.25rem;
+  }
+
+  .sticky-col {
+    min-width: 80px;
+  }
+
+  .sticky-col-2,
+  .sticky-col-3 {
+    min-width: 100px;
+  }
+
+  .sticky-col-2 {
+    left: 80px;
+  }
+
+  .sticky-col-3 {
+    left: 180px;
+  }
+
+  .mes-header {
+    min-width: 70px;
+    font-size: 0.75rem;
   }
 }
