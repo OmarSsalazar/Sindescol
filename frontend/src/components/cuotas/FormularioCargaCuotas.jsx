@@ -39,7 +39,6 @@ export function FormularioCargaCuotas({ onGuardar, loading, showAlert }) {
         return;
       }
 
-      // Separar cuotas con valor 0 y sin valor
       const conCero = cuotasConInfo.filter(c => c.valor === 0 && !c.sinValor);
       const sinValor = cuotasConInfo.filter(c => c.sinValor || c.valor === null);
       
@@ -102,7 +101,6 @@ export function FormularioCargaCuotas({ onGuardar, loading, showAlert }) {
       if (!confirmar) return;
     }
 
-    // Filtrar solo cuotas válidas (que existen y tienen valor definido)
     const cuotasValidas = cuotasPreview.filter(c => c.existe && !c.sinValor && c.valor !== null);
     
     if (cuotasValidas.length === 0) {
@@ -150,27 +148,25 @@ export function FormularioCargaCuotas({ onGuardar, loading, showAlert }) {
               type="number"
               value={anioSeleccionado}
               onChange={(e) => setAnioSeleccionado(parseInt(e.target.value))}
-              min="2020"
-              max="2030"
+              min="1900"
+              max="2100"
               required
             />
+            <small style={{ color: "#666", fontSize: "12px", marginTop: "4px", display: "block" }}>
+              Puedes ingresar cualquier año entre 1900 y 2100
+            </small>
           </div>
         </div>
 
         <div className="form-group">
-          <label>Archivo de Cuotas (CSV, TXT, XLS, XLSX) *</label>
+          <label>Archivo de Cuotas (CSV, XLSX) *</label>
           <input
             id="archivo-cuotas"
             type="file"
-            accept=".csv,.txt,.xls,.xlsx"
+            accept=".csv, .xlsx"
             onChange={handleArchivoChange}
             disabled={!mesSeleccionado}
           />
-          <small className="cuotas-file-hint">
-            📋 Formato esperado: Primera columna = Cédula, Segunda columna = Valor
-            <br />
-            Ejemplo: 123456789,50000 o 123456789;50000
-          </small>
         </div>
 
         {procesandoArchivo && (
