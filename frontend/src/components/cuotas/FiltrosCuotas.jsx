@@ -1,10 +1,13 @@
 // frontend/src/components/cuotas/FiltrosCuotas.jsx
 export function FiltrosCuotas({ filtros, onChange, onLimpiar }) {
-  // Generar años disponibles (últimos 5 años + próximos 2)
+  // Generar años disponibles (desde 2000 hasta 20 años en el futuro)
   const generarAnios = () => {
     const anioActual = new Date().getFullYear();
     const anios = [];
-    for (let i = anioActual - 5; i <= anioActual + 2; i++) {
+    const anioInicio = 2000; // Puedes cambiar este valor si necesitas años más antiguos
+    const anioFin = anioActual + 100; // 20 años hacia el futuro
+    
+    for (let i = anioInicio; i <= anioFin; i++) {
       anios.push(i);
     }
     return anios;
