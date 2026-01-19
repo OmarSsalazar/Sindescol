@@ -2,7 +2,7 @@ import * as cuotasService from "../services/cuotasService.js";
 
 export const getCuotas = async (req, res) => {
   try {
-    const cuotas = await cuotasService.getCuotas();
+    const cuotas = await cuotasService.getCuotas(req.departamento);
     res.json({ success: true, data: cuotas });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
@@ -32,7 +32,7 @@ export const getCuotasByCedula = async (req, res) => {
 
 export const createCuota = async (req, res) => {
   try {
-    const cuota = await cuotasService.createCuota(req.body);
+    const cuota = await cuotasService.createCuota(req.body, req.departamento);
     res.status(201).json({ success: true, data: cuota });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });

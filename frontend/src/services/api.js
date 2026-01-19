@@ -11,7 +11,7 @@ const api = axios.create({
 // Interceptor para agregar token
 api.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem('token') || sessionStorage.getItem('token');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -27,6 +27,8 @@ api.interceptors.response.use(
     if (error.response?.status === 401) {
       localStorage.removeItem('token');
       localStorage.removeItem('usuario');
+      sessionStorage.removeItem('token');
+      sessionStorage.removeItem('usuario');
       window.location.href = '/login';
     }
     return Promise.reject(error);
@@ -64,5 +66,25 @@ export const getSalarioById = (id) => api.get(`/salarios/${id}`);
 export const createSalario = (data) => api.post("/salarios", data);
 export const updateSalario = (id, data) => api.put(`/salarios/${id}`, data);
 export const deleteSalario = (id) => api.delete(`/salarios/${id}`);
+
+// MUNICIPIOS
+export const getMunicipios = () => api.get("/municipios");
+export const getMunicipioById = (id) => api.get(`/municipios/${id}`);
+
+// DEPARTAMENTOS
+export const getDepartamentos = () => api.get("/departamentos");
+export const getDepartamentoById = (id) => api.get(`/departamentos/${id}`);
+
+// ACTAS
+export const getActaNombramiento = (afiliadoId) => api.get(`/actas/nombramiento/${afiliadoId}`);
+export const getActaPosesion = (afiliadoId) => api.get(`/actas/posesion/${afiliadoId}`);
+
+// OTROS CARGOS
+export const getOtrosCargos = (afiliadoId) => api.get(`/otros-cargos/${afiliadoId}`);
+export const createOtroCargo = (data) => api.post("/otros-cargos", data);
+export const deleteOtroCargo = (id) => api.delete(`/otros-cargos/${id}`);
+
+// RECTORES
+export const getRectorByInstitucion = (institucionId) => api.get(`/rectores/${institucionId}`);
 
 export default api;

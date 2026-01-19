@@ -15,7 +15,9 @@ export const getAfiliados = async (departamento) => {
     ORDER BY a.id_afiliado DESC
   `;
   
+  console.log('📊 Cargando afiliados para departamento:', departamento);
   const [afiliados] = await db.query(query, [departamento]);
+  console.log('✅ Afiliados encontrados:', afiliados.length);
   return afiliados;
 };
 
@@ -98,11 +100,31 @@ export const getAfiliadoByCedula = async (cedula) => {
 // ============================================
 // FUNCIÓN OPTIMIZADA DE CREACIÓN
 // ============================================
-export const createAfiliado = async (data) => {
+export const createAfiliado = async (data, departamento) => {
   const connection = await db.getConnection();
   
   try {
     await connection.beginTransaction();
+
+    // Validar que el municipio_trabajo pertenece al departamento del usuario
+    if (data.municipio_trabajo) {
+      const [municipios] = await connection.query(
+        'SELECT departamento FROM municipios WHERE id_municipio = ?',
+        [data.municipio_trabajo]
+      );
+      
+      console.log('🔍 Validación municipio:', {
+        id_municipio: data.municipio_trabajo,
+        municipioEnBD: municipios[0],
+        departamentoUsuario: departamento
+      });
+      
+      if (municipios.length === 0 || municipios[0].departamento !== departamento) {
+        throw new Error('El municipio de trabajo no pertenece a tu departamento');
+      }
+    } else {
+      throw new Error('Municipio de trabajo es requerido');
+    }
 
     const {
       // Datos personales
@@ -316,11 +338,23 @@ export const createAfiliado = async (data) => {
   }
 };
 
-export const updateAfiliado = async (id, data) => {
+export const updateAfiliado = async (id, data, departamento) => {
   const connection = await db.getConnection();
   
   try {
     await connection.beginTransaction();
+
+    // Validar que el municipio_trabajo pertenece al departamento del usuario
+    if (data.municipio_trabajo) {
+      const [municipios] = await connection.query(
+        'SELECT departamento FROM municipios WHERE id_municipio = ?',
+        [data.municipio_trabajo]
+      );
+      
+      if (municipios.length === 0 || municipios[0].departamento !== departamento) {
+        throw new Error('El municipio de trabajo no pertenece a tu departamento');
+      }
+    }
 
     const camposAfiliado = [];
     const valoresAfiliado = [];

@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
-import "./ModalCrearAfiliado.css"; // Reutilizamos los estilos
+import * as api from "../../services/api";
+import "./ModalCrearAfiliado.css";
 
 export const ModalEditarAfiliado = ({ isOpen, onClose, afiliadoId, onSubmit }) => {
   const [activeTab, setActiveTab] = useState("personales");
@@ -67,7 +68,7 @@ export const ModalEditarAfiliado = ({ isOpen, onClose, afiliadoId, onSubmit }) =
     const calcularSalario = async () => {
       if (formData.id_cargo && formData.municipio_trabajo) {
         try {
-          const response = await fetch(`/api/salarios?id_cargo=${formData.id_cargo}&id_municipio=${formData.municipio_trabajo}`);
+          const response = await fetchWithAuth(`/api/salarios?id_cargo=${formData.id_cargo}&id_municipio=${formData.municipio_trabajo}`);
           const data = await response.json();
           
           if (data.success && data.data.length > 0) {
@@ -91,8 +92,7 @@ export const ModalEditarAfiliado = ({ isOpen, onClose, afiliadoId, onSubmit }) =
     setLoading(true);
     try {
       // Cargar datos del afiliado
-      const response = await fetch(`/api/afiliados/${afiliadoId}`);
-      const data = await response.json();
+      const { data } = await api.getAfiliadoById(afiliadoId);
       
       if (data.success) {
         const afiliado = data.data;
@@ -137,8 +137,7 @@ export const ModalEditarAfiliado = ({ isOpen, onClose, afiliadoId, onSubmit }) =
       }
 
       // Cargar actas de nombramiento
-      const responseNombramiento = await fetch(`/api/actas/nombramiento/${afiliadoId}`);
-      const dataNombramiento = await responseNombramiento.json();
+      const { data: dataNombramiento } = await api.getActaNombramiento(afiliadoId);
       if (dataNombramiento.success && dataNombramiento.data.length > 0) {
         const acta = dataNombramiento.data[0];
         const formatFecha = (fecha) => {
@@ -156,8 +155,7 @@ export const ModalEditarAfiliado = ({ isOpen, onClose, afiliadoId, onSubmit }) =
       }
 
       // Cargar actas de posesión
-      const responsePosesion = await fetch(`/api/actas/posesion/${afiliadoId}`);
-      const dataPosesion = await responsePosesion.json();
+      const { data: dataPosesion } = await api.getActaPosesion(afiliadoId);
       if (dataPosesion.success && dataPosesion.data.length > 0) {
         const acta = dataPosesion.data[0];
         const formatFecha = (fecha) => {
@@ -174,8 +172,7 @@ export const ModalEditarAfiliado = ({ isOpen, onClose, afiliadoId, onSubmit }) =
       }
 
       // Cargar otros cargos
-      const responseOtros = await fetch(`/api/otros-cargos/${afiliadoId}`);
-      const dataOtros = await responseOtros.json();
+      const { data: dataOtros } = await api.getOtrosCargos(afiliadoId);
       if (dataOtros.success && dataOtros.data) {
         setFormData(prev => ({
           ...prev,
@@ -189,8 +186,7 @@ export const ModalEditarAfiliado = ({ isOpen, onClose, afiliadoId, onSubmit }) =
 
       // Cargar rector (si existe)
       if (data.success && data.data.id_institucion) {
-        const responseRector = await fetch(`/api/rectores/${data.data.id_institucion}`);
-        const dataRector = await responseRector.json();
+        const { data: dataRector } = await api.getRectorByInstitucion(data.data.id_institucion);
         if (dataRector.success && dataRector.data) {
           setFormData(prev => ({
             ...prev,
@@ -223,7 +219,7 @@ export const ModalEditarAfiliado = ({ isOpen, onClose, afiliadoId, onSubmit }) =
       const data = {};
       for (const [key, url] of Object.entries(endpoints)) {
         try {
-          const response = await fetch(url);
+          const response = await fetchWithAuth(url);
           if (!response.ok) {
             data[key] = [];
             continue;

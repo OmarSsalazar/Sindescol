@@ -3,6 +3,7 @@ import { ModalCrearAfiliado } from "../components/afiliados/ModalCrearAfiliado";
 import { ModalVerAfiliado } from "../components/afiliados/ModalVerAfiliado";
 import { ModalEditarAfiliado } from "../components/afiliados/ModalEditarAfiliado";
 import { ModalEliminarAfiliado } from "../components/afiliados/ModalEliminarAfiliado";
+import { fetchWithAuth } from "../utils/fetchWithAuth";
 import "./Afiliados.css";
 
 function Afiliados() {
@@ -34,146 +35,139 @@ function Afiliados() {
     return () => clearTimeout(timer);
   }, [busqueda]);
 
-  const cargarAfiliados = async () => {
-    try {
-      setLoading(true);
-      const response = await fetch("/api/afiliados");
+ const cargarAfiliados = async () => {
+  try {
+    setLoading(true);
+    const response = await fetchWithAuth("/api/afiliados");
 
-      if (!response.ok) {
-        throw new Error(`Error HTTP ${response.status}: ${response.statusText}`);
-      }
-
-      const text = await response.text();
-      let data;
-      try {
-        data = JSON.parse(text);
-      } catch (e) {
-        throw new Error("Respuesta no es JSON válido");
-      }
-
-      if (data.success) {
-        console.log(`✅ Cargados ${data.data?.length || 0} afiliados`);
-        setAfiliados(data.data || []);
-      }
-    } catch (error) {
-      console.error("Error completo:", error);
-      setAfiliados([]);
-    } finally {
-      setLoading(false);
+    if (!response.ok) {
+      throw new Error(`Error HTTP ${response.status}: ${response.statusText}`);
     }
-  };
+
+    const text = await response.text();
+    let data;
+    try {
+      data = JSON.parse(text);
+    } catch (e) {
+      throw new Error("Respuesta no es JSON válido");
+    }
+
+    if (data.success) {
+      console.log(`✅ Cargados ${data.data?.length || 0} afiliados`);
+      setAfiliados(data.data || []);
+    }
+  } catch (error) {
+    console.error("Error completo:", error);
+    setAfiliados([]);
+  } finally {
+    setLoading(false);
+  }
+};
 
   const handleCrearAfiliado = async (formData) => {
-    try {
-      console.log("Enviando datos del afiliado...");
-      const response = await fetch("/api/afiliados", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(formData),
-      });
+  try {
+    console.log("Enviando datos del afiliado...");
+    const response = await fetchWithAuth("/api/afiliados", {
+      method: "POST",
+      body: JSON.stringify(formData)
+    });
 
-      if (!response.ok) {
-        throw new Error(`Error HTTP ${response.status}`);
-      }
-
-      const text = await response.text();
-      let data;
-      try {
-        data = JSON.parse(text);
-      } catch (e) {
-        throw new Error("Respuesta no es JSON válido");
-      }
-
-      if (data.success) {
-        console.log("✅ Afiliado creado exitosamente");
-        setModalCrearOpen(false);
-        cargarAfiliados();
-        alert("✅ Afiliado creado exitosamente");
-      } else {
-        console.error("Error del servidor:", data.error);
-        alert("❌ Error al crear afiliado: " + data.error);
-      }
-    } catch (error) {
-      console.error("Error creando afiliado:", error);
-      alert("❌ Error al crear afiliado");
+    if (!response.ok) {
+      throw new Error(`Error HTTP ${response.status}`);
     }
-  };
 
-  const handleEditarAfiliado = async (id, formData) => {
+    const text = await response.text();
+    let data;
     try {
-      console.log("Editando afiliado:", id);
-      const response = await fetch(`/api/afiliados/${id}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(formData),
-      });
-
-      if (!response.ok) {
-        throw new Error(`Error HTTP ${response.status}`);
-      }
-
-      const text = await response.text();
-      let data;
-      try {
-        data = JSON.parse(text);
-      } catch (e) {
-        throw new Error("Respuesta no es JSON válido");
-      }
-
-      if (data.success) {
-        console.log("✅ Afiliado actualizado exitosamente");
-        setModalEditarOpen(false);
-        setAfiliadoSeleccionado(null);
-        cargarAfiliados();
-        alert("✅ Afiliado actualizado exitosamente");
-      } else {
-        console.error("Error del servidor:", data.error);
-        alert("❌ Error al actualizar afiliado: " + data.error);
-      }
-    } catch (error) {
-      console.error("Error actualizando afiliado:", error);
-      alert("❌ Error al actualizar afiliado");
+      data = JSON.parse(text);
+    } catch (e) {
+      throw new Error("Respuesta no es JSON válido");
     }
-  };
 
-  const handleEliminarAfiliado = async () => {
+    if (data.success) {
+      console.log("✅ Afiliado creado exitosamente");
+      setModalCrearOpen(false);
+      cargarAfiliados();
+      alert("✅ Afiliado creado exitosamente");
+    } else {
+      console.error("Error del servidor:", data.error);
+      alert("❌ Error al crear afiliado: " + data.error);
+    }
+  } catch (error) {
+    console.error("Error creando afiliado:", error);
+    alert("❌ Error al crear afiliado");
+  }
+};
+
+  const handleEditarAfiliado = async (formData) => {
+  try {
+    console.log("Enviando datos del afiliado...");
+    const response = await fetchWithAuth("/api/afiliados", {
+      method: "POST",
+      body: JSON.stringify(formData)
+    });
+
+    if (!response.ok) {
+      throw new Error(`Error HTTP ${response.status}`);
+    }
+
+    const text = await response.text();
+    let data;
     try {
-      console.log("Eliminando afiliado:", afiliadoSeleccionado);
-      const response = await fetch(`/api/afiliados/${afiliadoSeleccionado}`, {
-        method: "DELETE",
-      });
-
-      if (!response.ok) {
-        throw new Error(`Error HTTP ${response.status}`);
-      }
-
-      const text = await response.text();
-      let data;
-      try {
-        data = JSON.parse(text);
-      } catch (e) {
-        throw new Error("Respuesta no es JSON válido");
-      }
-
-      if (data.success) {
-        console.log("✅ Afiliado eliminado exitosamente");
-        setModalEliminarOpen(false);
-        setAfiliadoSeleccionado(null);
-        cargarAfiliados();
-        alert("✅ Afiliado eliminado exitosamente");
-      } else {
-        console.error("Error del servidor:", data.error);
-        alert("❌ Error al eliminar afiliado: " + data.error);
-      }
-    } catch (error) {
-      console.error("Error eliminando afiliado:", error);
-      alert("❌ Error al eliminar afiliado");
+      data = JSON.parse(text);
+    } catch (e) {
+      throw new Error("Respuesta no es JSON válido");
     }
-  };
+
+    if (data.success) {
+      console.log("✅ Afiliado editado exitosamente");
+      setModalEditarOpen(false);
+      cargarAfiliados();
+      alert("✅ Afiliado editado exitosamente");
+    } else {
+      console.error("Error del servidor:", data.error);
+      alert("❌ Error al editar afiliado: " + data.error);
+    }
+  } catch (error) {
+    console.error("Error editando afiliado:", error);
+    alert("❌ Error al editar afiliado");
+  }
+};
+
+  const handleEliminarAfiliado = async (formData) => {
+  try {
+    console.log("Enviando datos del afiliado...");
+    const response = await fetchWithAuth("/api/afiliados", {
+      method: "POST",
+      body: JSON.stringify(formData)
+    });
+
+    if (!response.ok) {
+      throw new Error(`Error HTTP ${response.status}`);
+    }
+
+    const text = await response.text();
+    let data;
+    try {
+      data = JSON.parse(text);
+    } catch (e) {
+      throw new Error("Respuesta no es JSON válido");
+    }
+
+    if (data.success) {
+      console.log("✅ Afiliado eliminado exitosamente");
+      setModalEliminarOpen(false);
+      cargarAfiliados();
+      alert("✅ Afiliado eliminado exitosamente");
+    } else {
+      console.error("Error del servidor:", data.error);
+      alert("❌ Error al eliminar afiliado: " + data.error);
+    }
+  } catch (error) {
+    console.error("Error eliminando afiliado:", error);
+    alert("❌ Error al eliminar afiliado");
+  }
+};
 
   const handleVerAfiliado = (id) => {
     setAfiliadoSeleccionado(id);
