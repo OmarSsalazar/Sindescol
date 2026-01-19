@@ -1,7 +1,13 @@
 import pool from "../config/db.js";
 
-export const getCuotas = async () => {
-  const [rows] = await pool.query("SELECT * FROM cuotas");
+export const getCuotas = async (departamento) => {
+  const [rows] = await pool.query(`
+    SELECT c.* FROM cuotas c
+    INNER JOIN afiliados a ON c.cedula = a.cedula
+    INNER JOIN municipios m ON a.municipio_trabajo = m.id_municipio
+    WHERE m.departamento = ?
+    ORDER BY c.id_cuota DESC
+  `, [departamento]);
   return rows;
 };
 
@@ -15,8 +21,20 @@ export const getCuotasByCedula = async (cedula) => {
   return rows;
 };
 
-export const createCuota = async (data) => {
+export const createCuota = async (data, departamento) => {
   const { cedula, mes, anio, valor } = data;
+
+  // Validar que el afiliado pertenece al departamento del usuario
+  const [afiliados] = await pool.query(`
+    SELECT a.id_afiliado, m.departamento
+    FROM afiliados a
+    INNER JOIN municipios m ON a.municipio_trabajo = m.id_municipio
+    WHERE a.cedula = ?
+  `, [cedula]);
+
+  if (afiliados.length === 0 || afiliados[0].departamento !== departamento) {
+    throw new Error('El afiliado no pertenece a tu departamento');
+  }
 
   const [result] = await pool.query(
     "INSERT INTO cuotas (cedula, mes, anio, valor) VALUES (?, ?, ?, ?)",

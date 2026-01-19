@@ -1,4 +1,4 @@
-
+import { fetchWithAuth } from './fetchWithAuth';
 let XLSX;
 
 async function cargarXLSX() {
@@ -29,7 +29,7 @@ export async function procesarArchivoCuotas(file, extension) {
   const cuotasConInfo = await Promise.all(
     cuotasExtraidas.map(async (cuota) => {
       try {
-        const response = await fetch(`/api/afiliados/cedula/${cuota.cedula}`);
+        const response = await fetchWithAuth(`/api/afiliados/cedula/${cuota.cedula}`);
         const data = await response.json();
         
         if (data.success && data.data) {

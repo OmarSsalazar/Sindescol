@@ -55,11 +55,8 @@ export default function Salarios() {
 
   const fetchMunicipios = async () => {
     try {
-      const response = await fetch("/api/municipios");
-      const data = await response.json();
-      if (data.success) {
-        setMunicipios(data.data || []);
-      }
+      const { data } = await api.getMunicipios();
+      setMunicipios(data.data || []);
     } catch (error) {
       console.error("Error cargando municipios:", error);
     }

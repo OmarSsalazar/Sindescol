@@ -33,11 +33,8 @@ export default function Cargos() {
 
   const fetchMunicipios = async () => {
     try {
-      const response = await fetch("/api/municipios");
-      const data = await response.json();
-      if (data.success) {
-        setMunicipios(data.data || []);
-      }
+      const { data } = await api.getMunicipios();
+      setMunicipios(data.data || []);
     } catch (error) {
       console.error("Error cargando municipios:", error);
     }
@@ -112,8 +109,7 @@ export default function Cargos() {
   const handleEdit = async (cargo) => {
     try {
       // Cargar los municipios asociados al cargo
-      const response = await fetch(`/api/cargos/${cargo.id_cargo}/municipios`);
-      const data = await response.json();
+      const { data } = await api.getMunicipiosByCargo(cargo.id_cargo);
       
       if (data.success && data.data.length > 0) {
         const municipiosIds = data.data.map(m => m.id_municipio);
@@ -159,8 +155,7 @@ export default function Cargos() {
     } else {
       // Si no están mostrados, cargarlos y mostrarlos
       try {
-        const response = await fetch(`/api/cargos/${id_cargo}/municipios`);
-        const data = await response.json();
+        const { data } = await api.getMunicipiosByCargo(id_cargo);
         if (data.success) {
           setShowMunicipios(prev => ({ ...prev, [id_cargo]: data.data }));
         }

@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import * as api from "../../services/api";
 import "./ModalVerAfiliado.css";
 
 export const ModalVerAfiliado = ({ isOpen, onClose, afiliadoId }) => {
@@ -23,11 +24,10 @@ export const ModalVerAfiliado = ({ isOpen, onClose, afiliadoId }) => {
     const cargarSalario = async () => {
       if (afiliado?.id_cargo && afiliado?.municipio_trabajo) {
         try {
-          const response = await fetch(`/api/salarios?id_cargo=${afiliado.id_cargo}&id_municipio=${afiliado.municipio_trabajo}`);
-          const data = await response.json();
-          
+          const { data } = await api.getSalarios();
           if (data.success && data.data.length > 0) {
-            setSalarioCalculado(data.data[0].salario);
+            const salario = data.data.find(s => s.id_cargo === afiliado.id_cargo && s.id_municipio === afiliado.municipio_trabajo);
+            setSalarioCalculado(salario?.salario || null);
           } else {
             setSalarioCalculado(null);
           }
@@ -45,30 +45,25 @@ export const ModalVerAfiliado = ({ isOpen, onClose, afiliadoId }) => {
     setLoading(true);
     try {
       // Cargar datos del afiliado
-      const response = await fetch(`/api/afiliados/${afiliadoId}`);
-      const data = await response.json();
-      
-      if (data.success) {
-        setAfiliado(data.data);
+      const { data: afiliadoData } = await api.getAfiliadoById(afiliadoId);
+      if (afiliadoData.success) {
+        setAfiliado(afiliadoData.data);
       }
 
       // Cargar actas de nombramiento
-      const responsaNombramiento = await fetch(`/api/actas/nombramiento/${afiliadoId}`);
-      const dataNombramiento = await responsaNombramiento.json();
+      const { data: dataNombramiento } = await api.getActaNombramiento(afiliadoId);
       if (dataNombramiento.success && dataNombramiento.data.length > 0) {
         setActas(prev => ({ ...prev, nombramiento: dataNombramiento.data[0] }));
       }
 
       // Cargar actas de posesión
-      const responsePosesion = await fetch(`/api/actas/posesion/${afiliadoId}`);
-      const dataPosesion = await responsePosesion.json();
+      const { data: dataPosesion } = await api.getActaPosesion(afiliadoId);
       if (dataPosesion.success && dataPosesion.data.length > 0) {
         setActas(prev => ({ ...prev, posesion: dataPosesion.data[0] }));
       }
 
       // Cargar otros cargos
-      const responseOtros = await fetch(`/api/otros-cargos/${afiliadoId}`);
-      const dataOtros = await responseOtros.json();
+      const { data: dataOtros } = await api.getOtrosCargos(afiliadoId);
       if (dataOtros.success) {
         setOtrosCargos(dataOtros.data || []);
       }

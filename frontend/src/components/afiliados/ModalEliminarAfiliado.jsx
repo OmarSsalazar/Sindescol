@@ -1,4 +1,5 @@
 import "./ModalEliminarAfiliado.css";
+import { fetchWithAuth } from "../../utils/fetchWithAuth";
 
 export const ModalEliminarAfiliado = ({ isOpen, onClose, onConfirm, afiliado }) => {
   if (!isOpen) return null;

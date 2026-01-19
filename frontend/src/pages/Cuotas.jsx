@@ -4,6 +4,7 @@ import * as api from "../services/api";
 import { FormularioCargaCuotas } from "../components/cuotas/FormularioCargaCuotas";
 import { FiltrosCuotas } from "../components/cuotas/FiltrosCuotas";
 import { PaginacionControles } from "../components/shared/PaginacionControles";
+import { fetchWithAuth } from "../utils/fetchWithAuth";
 import "../styles/cuotas.css";
 
 const MESES = ["enero", "febrero", "marzo", "abril", "mayo", "junio",
@@ -32,11 +33,11 @@ export default function Cuotas() {
     setLoading(true);
     try {
       // Cargar cuotas
-      const responseCuotas = await fetch("/api/cuotas");
+      const responseCuotas = await fetchWithAuth("/api/cuotas");
       const dataCuotas = await responseCuotas.json();
       
       // Cargar afiliados
-      const responseAfiliados = await fetch("/api/afiliados");
+      const responseAfiliados = await fetchWithAuth("/api/afiliados");
       const dataAfiliados = await responseAfiliados.json();
 
       if (dataCuotas.success) {

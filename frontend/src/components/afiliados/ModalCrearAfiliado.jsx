@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { fetchWithAuth } from "../../utils/fetchWithAuth";
 import "./ModalCrearAfiliado.css";
 
 export const ModalCrearAfiliado = ({ isOpen, onClose, onSubmit }) => {
@@ -70,83 +71,83 @@ export const ModalCrearAfiliado = ({ isOpen, onClose, onSubmit }) => {
 
   // OPTIMIZACIÓN: Efecto para calcular salario (no bloqueante)
   useEffect(() => {
-    const calcularSalario = async () => {
-      if (formData.id_cargo && formData.municipio_trabajo) {
-        try {
-          setCargandoSalario(true);
-          const response = await fetch(`/api/salarios?id_cargo=${formData.id_cargo}&id_municipio=${formData.municipio_trabajo}`);
-          
-          if (!response.ok) {
-            setSalarioCalculado(null);
-            return;
-          }
-
-          const data = await response.json();
-
-          if (data.success && data.data && data.data.length > 0) {
-            const salario = data.data.find(s => 
-              parseInt(s.id_cargo) === parseInt(formData.id_cargo) && 
-              parseInt(s.id_municipio) === parseInt(formData.municipio_trabajo)
-            );
-            
-            setSalarioCalculado(salario ? salario.salario : null);
-          } else {
-            setSalarioCalculado(null);
-          }
-        } catch (error) {
-          console.error("Error calculando salario:", error);
+  const calcularSalario = async () => {
+    if (formData.id_cargo && formData.municipio_trabajo) {
+      try {
+        setCargandoSalario(true);
+        const response = await fetchWithAuth(`/api/salarios?id_cargo=${formData.id_cargo}&id_municipio=${formData.municipio_trabajo}`);
+        
+        if (!response.ok) {
           setSalarioCalculado(null);
-        } finally {
-          setCargandoSalario(false);
+          return;
         }
-      } else {
+
+        const data = await response.json();
+
+        if (data.success && data.data && data.data.length > 0) {
+          const salario = data.data.find(s => 
+            parseInt(s.id_cargo) === parseInt(formData.id_cargo) && 
+            parseInt(s.id_municipio) === parseInt(formData.municipio_trabajo)
+          );
+          
+          setSalarioCalculado(salario ? salario.salario : null);
+        } else {
+          setSalarioCalculado(null);
+        }
+      } catch (error) {
+        console.error("Error calculando salario:", error);
         setSalarioCalculado(null);
+      } finally {
         setCargandoSalario(false);
       }
-    };
+    } else {
+      setSalarioCalculado(null);
+      setCargandoSalario(false);
+    }
+  };
 
-    calcularSalario();
-  }, [formData.id_cargo, formData.municipio_trabajo]);
+  calcularSalario();
+}, [formData.id_cargo, formData.municipio_trabajo]);
 
   // OPTIMIZACIÓN: Cargar todas las opciones en paralelo
   const cargarOpciones = async () => {
-    try {
-      const endpoints = {
-        religiones: "/api/religiones",
-        municipios: "/api/municipios",
-        eps: "/api/eps",
-        arl: "/api/arl",
-        pension: "/api/pension",
-        cesantias: "/api/cesantias",
-        cargos: "/api/cargos",
-        instituciones: "/api/instituciones",
-      };
+  try {
+    const endpoints = {
+      religiones: "/api/religiones",
+      municipios: "/api/municipios",
+      eps: "/api/eps",
+      arl: "/api/arl",
+      pension: "/api/pension",
+      cesantias: "/api/cesantias",
+      cargos: "/api/cargos",
+      instituciones: "/api/instituciones",
+    };
 
-      const promesas = Object.entries(endpoints).map(async ([key, url]) => {
-        try {
-          const response = await fetch(url);
-          if (!response.ok) return [key, []];
-          
-          const text = await response.text();
-          const result = JSON.parse(text);
-          return [key, result.data || result || []];
-        } catch (err) {
-          console.error(`Error cargando ${key}:`, err);
-          return [key, []];
-        }
-      });
+    const promesas = Object.entries(endpoints).map(async ([key, url]) => {
+      try {
+        const response = await fetchWithAuth(url);
+        if (!response.ok) return [key, []];
+        
+        const text = await response.text();
+        const result = JSON.parse(text);
+        return [key, result.data || result || []];
+      } catch (err) {
+        console.error(`Error cargando ${key}:`, err);
+        return [key, []];
+      }
+    });
 
-      const resultados = await Promise.all(promesas);
-      const data = {};
-      resultados.forEach(([key, value]) => {
-        data[key] = value;
-      });
+    const resultados = await Promise.all(promesas);
+    const data = {};
+    resultados.forEach(([key, value]) => {
+      data[key] = value;
+    });
 
-      setOpciones(data);
-    } catch (error) {
-      console.error("Error cargando opciones:", error);
-    }
-  };
+    setOpciones(data);
+  } catch (error) {
+    console.error("Error cargando opciones:", error);
+  }
+};
 
   const validarPestana = (pestana) => {
     if (pestana === "personales") {

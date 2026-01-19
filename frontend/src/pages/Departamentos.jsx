@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { ModalCrearDepartamento } from "../components/departamentos/ModalCrearDepartamento";
 import { ModalCrearMunicipio } from "../components/departamentos/ModalCrearMunicipio";
 import { ModalEditarMunicipio } from "../components/departamentos/ModalEditarMunicipio";
+import { fetchWithAuth } from "../utils/fetchWithAuth";
 import "./Departamentos.css";
 
 export default function Departamentos() {
@@ -26,7 +27,7 @@ export default function Departamentos() {
   const cargarDepartamentos = async () => {
     setLoading(true);
     try {
-      const response = await fetch("/api/departamentos");
+      const response = await fetchWithAuth("/api/departamentos");
       const data = await response.json();
       
       if (data.success) {
@@ -54,7 +55,7 @@ export default function Departamentos() {
 
   const cargarMunicipios = async (departamento) => {
     try {
-      const response = await fetch(`/api/departamentos/${encodeURIComponent(departamento)}/municipios`);
+      const response = await fetchWithAuth(`/api/departamentos/${encodeURIComponent(departamento)}/municipios`);
       const data = await response.json();
       
       if (data.success) {
@@ -91,7 +92,7 @@ export default function Departamentos() {
 
   const handleCrearDepartamento = async (formData) => {
     try {
-      const response = await fetch("/api/departamentos/crear-con-municipios", {
+      const response = await fetchWithAuth("/api/departamentos/crear-con-municipios", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formData)
@@ -116,7 +117,7 @@ export default function Departamentos() {
 
   const handleCrearMunicipio = async (formData) => {
     try {
-      const response = await fetch("/api/departamentos/municipio", {
+      const response = await fetchWithAuth("/api/departamentos/municipio", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formData)
@@ -144,7 +145,7 @@ export default function Departamentos() {
 
   const handleEditarMunicipio = async (id, formData) => {
     try {
-      const response = await fetch(`/api/departamentos/municipio/${id}`, {
+      const response = await fetchWithAut(`/api/departamentos/municipio/${id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formData)
@@ -173,7 +174,7 @@ export default function Departamentos() {
     }
 
     try {
-      const response = await fetch(`/api/departamentos/municipio/${id}`, {
+      const response = await fetchWithAuth(`/api/departamentos/municipio/${id}`, {
         method: "DELETE"
       });
 
