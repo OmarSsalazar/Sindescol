@@ -24,8 +24,8 @@ export default function Navbar() {
             src="/escudo_sindescol.png" 
             alt="SINDESCOL Logo" 
             style={{ 
-              width: "50px", 
-              height: "50px",
+              width: "70px", 
+              height: "70px",
               borderRadius: "50%",
               objectFit: "cover",
               border: "2px solid #FFC107",
@@ -45,7 +45,7 @@ export default function Navbar() {
               color: "#E3F2FD",
               marginTop: "-5px"
             }}>
-              Subdirectiva Nariño
+              
             </div>
           </div>
         </Link>
