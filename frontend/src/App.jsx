@@ -2,12 +2,14 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import Login from "./pages/Login";
 import Navbar from "./components/Navbar";
+import Sidebar from "./components/Sidebar";
 import Home from "./pages/Home";
 import Afiliados from "./pages/Afiliados";
 import Cargos from "./pages/Cargos";
 import Cuotas from "./pages/Cuotas";
 import Salarios from "./pages/Salarios";
 import Departamentos from "./pages/Departamentos";
+import GestionUsuarios from "./pages/GestionUsuarios";
 import "./styles/global.css";
 
 // Componente para proteger rutas
@@ -34,6 +36,7 @@ function App() {
           element={
             <ProtectedRoute>
               <>
+                <Sidebar />
                 <Navbar />
                 <Routes>
                   <Route path="/" element={<Home />} />
@@ -42,6 +45,7 @@ function App() {
                   <Route path="/cuotas" element={<Cuotas />} />
                   <Route path="/salarios" element={<Salarios />} />
                   <Route path="/departamentos" element={<Departamentos />} />
+                  <Route path="/gestion-usuarios" element={<GestionUsuarios />} />
                 </Routes>
               </>
             </ProtectedRoute>

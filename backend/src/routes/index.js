@@ -7,11 +7,14 @@ import authRoutes from "./authRoutes.js";
 // Importar middleware
 import { verificarToken, filtrarPorDepartamento } from "../middleware/auth.js";
 
+
+
 // Importar todas las demás rutas
 let afiliadsRoutes, cargosRoutes, cuotasRoutes, salariosDepartamentosRoutes;
 let religionesRoutes, municipiosRoutes, epsRoutes, arlRoutes, pensionRoutes, cesantiasRoutes, institucionesRoutes;
 let actasRoutes, otrosCargosRoutes, rectoresRoutes;
 let departamentosRoutes;
+let usuariosRoutes;
 
 try {
   departamentosRoutes = (await import("./departamentosRoutes.js")).default;
@@ -118,6 +121,13 @@ try {
   console.error("❌ Error importando rectoresRoutes:", err.message);
 }
 
+try {
+  usuariosRoutes = (await import("./usuariosRoutes.js")).default;
+  console.log("✅ usuariosRoutes importado");
+} catch (err) {
+  console.error("❌ Error importando usuariosRoutes:", err.message);
+}
+
 const router = express.Router();
 
 // ⚠️ RUTAS PÚBLICAS (SIN AUTENTICACIÓN)
@@ -149,6 +159,8 @@ if (rectoresRoutes) router.use("/rectores", rectoresRoutes);
 
 // Rutas de departamentos
 if (departamentosRoutes) router.use("/departamentos", departamentosRoutes);
+// Rutas de usuarios
+if (usuariosRoutes) router.use("/usuarios", usuariosRoutes)
 
 console.log("✅ Todas las rutas cargadas (con autenticación)");
 

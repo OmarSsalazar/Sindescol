@@ -1,0 +1,330 @@
+// frontend/src/pages/GestionUsuarios.jsx
+import { useState, useEffect } from "react";
+import { fetchWithAuth } from "../utils/fetchWithAuth";
+import "./GestionUsuarios.css";
+
+export default function GestionUsuarios() {
+  const [usuarios, setUsuarios] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [showForm, setShowForm] = useState(false);
+  const [editingId, setEditingId] = useState(null);
+  const [alert, setAlert] = useState(null);
+  const [usuarioActual, setUsuarioActual] = useState(null);
+  
+  const [formData, setFormData] = useState({
+    email: "",
+    password: "",
+    nombre: "",
+    departamento: "",
+    rol: "usuario"
+  });
+
+  useEffect(() => {
+    const userData = localStorage.getItem('usuario') || sessionStorage.getItem('usuario');
+    if (userData) {
+      setUsuarioActual(JSON.parse(userData));
+    }
+    cargarUsuarios();
+  }, []);
+
+  const cargarUsuarios = async () => {
+    setLoading(true);
+    try {
+      const response = await fetchWithAuth("/api/usuarios");
+      const data = await response.json();
+      
+      if (data.success) {
+        setUsuarios(data.data || []);
+      }
+    } catch (error) {
+      showAlert("Error al cargar usuarios", "danger");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData({ ...formData, [name]: value });
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    
+    try {
+      let response;
+      
+      if (editingId) {
+        response = await fetchWithAuth(`/api/usuarios/${editingId}`, {
+          method: "PUT",
+          body: JSON.stringify(formData)
+        });
+      } else {
+        response = await fetchWithAuth("/api/usuarios", {
+          method: "POST",
+          body: JSON.stringify(formData)
+        });
+      }
+      
+      const data = await response.json();
+      
+      if (data.success) {
+        showAlert(editingId ? "Usuario actualizado" : "Usuario creado", "success");
+        resetForm();
+        cargarUsuarios();
+      } else {
+        showAlert(data.error || "Error al guardar", "danger");
+      }
+    } catch (error) {
+      showAlert(error.message || "Error al guardar", "danger");
+    }
+  };
+
+  const handleEdit = (usuario) => {
+    setFormData({
+      email: usuario.email,
+      password: "",
+      nombre: usuario.nombre,
+      departamento: usuario.departamento,
+      rol: usuario.rol
+    });
+    setEditingId(usuario.id_usuario);
+    setShowForm(true);
+  };
+
+  const handleDelete = async (id) => {
+    if (!window.confirm("¿Eliminar este usuario?")) {
+      return;
+    }
+    
+    try {
+      const response = await fetchWithAuth(`/api/usuarios/${id}`, {
+        method: "DELETE"
+      });
+      
+      const data = await response.json();
+      
+      if (data.success) {
+        showAlert("Usuario eliminado", "success");
+        cargarUsuarios();
+      } else {
+        showAlert(data.error || "Error al eliminar", "danger");
+      }
+    } catch (error) {
+      showAlert(error.message || "Error al eliminar", "danger");
+    }
+  };
+
+  const handleToggleActivo = async (id) => {
+    try {
+      const response = await fetchWithAuth(`/api/usuarios/${id}/toggle-activo`, {
+        method: "PATCH"
+      });
+      
+      const data = await response.json();
+      
+      if (data.success) {
+        showAlert("Estado actualizado", "success");
+        cargarUsuarios();
+      } else {
+        showAlert(data.error || "Error al actualizar", "danger");
+      }
+    } catch (error) {
+      showAlert("Error al actualizar", "danger");
+    }
+  };
+
+  const resetForm = () => {
+    setFormData({
+      email: "",
+      password: "",
+      nombre: "",
+      departamento: "",
+      rol: "usuario"
+    });
+    setEditingId(null);
+    setShowForm(false);
+  };
+
+  const showAlert = (message, type) => {
+    setAlert({ message, type });
+    setTimeout(() => setAlert(null), 3000);
+  };
+
+  const puedeEditarRol = usuarioActual?.rol === 'presidencia_nacional';
+
+  return (
+    <div className="container">
+      <div className="page-header">
+        <h1>👥 Gestión de Usuarios</h1>
+        <p>Administra los accesos al sistema</p>
+      </div>
+
+      {alert && <div className={`alert alert-${alert.type}`}>{alert.message}</div>}
+
+      <button className="btn btn-primary" onClick={() => setShowForm(!showForm)}>
+        {showForm ? "✕ Cancelar" : "➕ Nuevo Usuario"}
+      </button>
+
+      {showForm && (
+        <div className="card gestion-usuarios-form">
+          <h3>{editingId ? "Editar Usuario" : "Crear Nuevo Usuario"}</h3>
+          <form onSubmit={handleSubmit}>
+            <div className="form-row">
+              <div className="form-group">
+                <label>Email *</label>
+                <input
+                  type="email"
+                  name="email"
+                  value={formData.email}
+                  onChange={handleInputChange}
+                  placeholder="correo@sindescol.com"
+                  required
+                  disabled={editingId}
+                />
+                {editingId && (
+                  <small className="form-hint">El email no se puede modificar</small>
+                )}
+              </div>
+              <div className="form-group">
+                <label>{editingId ? "Nueva Contraseña (opcional)" : "Contraseña *"}</label>
+                <input
+                  type="password"
+                  name="password"
+                  value={formData.password}
+                  onChange={handleInputChange}
+                  placeholder="••••••••"
+                  required={!editingId}
+                />
+                {editingId && (
+                  <small className="form-hint">Dejar vacío para no cambiar</small>
+                )}
+              </div>
+            </div>
+
+            <div className="form-row">
+              <div className="form-group">
+                <label>Nombre Completo *</label>
+                <input
+                  type="text"
+                  name="nombre"
+                  value={formData.nombre}
+                  onChange={handleInputChange}
+                  placeholder="Juan Pérez"
+                  required
+                />
+              </div>
+              <div className="form-group">
+                <label>Departamento *</label>
+                <input
+                  type="text"
+                  name="departamento"
+                  value={formData.departamento}
+                  onChange={handleInputChange}
+                  placeholder="Nariño"
+                  required
+                  disabled={!puedeEditarRol}
+                />
+                {!puedeEditarRol && (
+                  <small className="form-hint">Usuarios de tu departamento únicamente</small>
+                )}
+              </div>
+            </div>
+
+            <div className="form-group">
+              <label>Rol *</label>
+              <select
+                name="rol"
+                value={formData.rol}
+                onChange={handleInputChange}
+                required
+                disabled={!puedeEditarRol}
+              >
+                <option value="usuario">Usuario</option>
+                {puedeEditarRol && <option value="presidencia">Presidencia</option>}
+              </select>
+              {!puedeEditarRol && (
+                <small className="form-hint">Solo puedes crear usuarios normales</small>
+              )}
+            </div>
+
+            <div className="form-actions">
+              <button type="submit" className="btn btn-success">
+                {editingId ? "💾 Actualizar" : "➕ Crear"} Usuario
+              </button>
+              <button type="button" className="btn btn-warning" onClick={resetForm}>
+                ✕ Cancelar
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
+
+      {loading ? (
+        <div className="loading">Cargando usuarios...</div>
+      ) : usuarios.length === 0 ? (
+        <div className="empty-state">
+          <p>No hay usuarios para gestionar</p>
+          <button className="btn btn-primary" onClick={() => setShowForm(true)}>
+            Crear el primer usuario
+          </button>
+        </div>
+      ) : (
+        <div className="usuarios-tabla-container">
+          <table className="table usuarios-table">
+            <thead>
+              <tr>
+                <th>Email</th>
+                <th>Nombre</th>
+                <th>Departamento</th>
+                <th>Rol</th>
+                <th>Estado</th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              {usuarios.map((usuario) => (
+                <tr key={usuario.id_usuario}>
+                  <td className="email-cell">{usuario.email}</td>
+                  <td>{usuario.nombre}</td>
+                  <td>{usuario.departamento}</td>
+                  <td>
+                    <span className={`rol-badge rol-${usuario.rol}`}>
+                      {usuario.rol === 'presidencia_nacional' ? '🏛️ P. Nacional' :
+                       usuario.rol === 'presidencia' ? '👔 Presidencia' :
+                       '👤 Usuario'}
+                    </span>
+                  </td>
+                  <td>
+                    <button
+                      className={`btn-estado ${usuario.activo ? 'activo' : 'inactivo'}`}
+                      onClick={() => handleToggleActivo(usuario.id_usuario)}
+                    >
+                      {usuario.activo ? '✅ Activo' : '❌ Inactivo'}
+                    </button>
+                  </td>
+                  <td>
+                    <div className="action-buttons">
+                      <button
+                        className="btn btn-warning btn-sm"
+                        onClick={() => handleEdit(usuario)}
+                      >
+                        ✏️ Editar
+                      </button>
+                      <button
+                        className="btn btn-danger btn-sm"
+                        onClick={() => handleDelete(usuario.id_usuario)}
+                      >
+                        🗑️ Eliminar
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
+  );
+}
