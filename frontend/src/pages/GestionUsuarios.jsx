@@ -15,6 +15,7 @@ export default function GestionUsuarios() {
     email: "",
     password: "",
     nombre: "",
+    celular: "",
     departamento: "",
     rol: "usuario"
   });
@@ -27,16 +28,42 @@ export default function GestionUsuarios() {
     cargarUsuarios();
   }, []);
 
+  // Limpiar formulario cuando se cierra
+  useEffect(() => {
+    if (!showForm) {
+      setFormData({
+        email: "",
+        password: "",
+        nombre: "",
+        celular: "",
+        departamento: "",
+        rol: "usuario"
+      });
+      setEditingId(null);
+    }
+  }, [showForm]);
+
   const cargarUsuarios = async () => {
     setLoading(true);
     try {
       const response = await fetchWithAuth("/api/usuarios");
       const data = await response.json();
       
+      console.log('📡 Respuesta del servidor:', data);
+      
       if (data.success) {
+        console.log('👥 Usuarios recibidos:', data.data.length);
+        if (data.data.length > 0) {
+          console.log('📱 Primer usuario con celular:', {
+            email: data.data[0].email,
+            celular: data.data[0].celular,
+            tipo: typeof data.data[0].celular
+          });
+        }
         setUsuarios(data.data || []);
       }
     } catch (error) {
+      console.error('❌ Error cargando usuarios:', error);
       showAlert("Error al cargar usuarios", "danger");
     } finally {
       setLoading(false);
@@ -45,11 +72,25 @@ export default function GestionUsuarios() {
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setFormData({ ...formData, [name]: value });
+    
+    // Validación en tiempo real para el celular
+    if (name === 'celular') {
+      // Solo permitir números y limitar a 10 dígitos
+      const numeros = value.replace(/\D/g, '');
+      setFormData({ ...formData, [name]: numeros.slice(0, 10) });
+    } else {
+      setFormData({ ...formData, [name]: value });
+    }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    // Validación adicional del celular
+    if (formData.celular && formData.celular.length !== 10) {
+      showAlert("El número de celular debe tener 10 dígitos", "danger");
+      return;
+    }
     
     try {
       let response;
@@ -85,6 +126,7 @@ export default function GestionUsuarios() {
       email: usuario.email,
       password: "",
       nombre: usuario.nombre,
+      celular: usuario.celular || "",
       departamento: usuario.departamento,
       rol: usuario.rol
     });
@@ -139,6 +181,7 @@ export default function GestionUsuarios() {
       email: "",
       password: "",
       nombre: "",
+      celular: "",
       departamento: "",
       rol: "usuario"
     });
@@ -146,9 +189,32 @@ export default function GestionUsuarios() {
     setShowForm(false);
   };
 
+  const handleCancelar = () => {
+    resetForm();
+  };
+
   const showAlert = (message, type) => {
     setAlert({ message, type });
     setTimeout(() => setAlert(null), 3000);
+  };
+
+  const formatCelular = (celular) => {
+    console.log('📱 Formateando celular:', celular, 'tipo:', typeof celular);
+    
+    if (!celular || celular === '' || celular === null || celular === undefined) {
+      return "No registrado";
+    }
+    
+    // Convertir a string y limpiar
+    const celularStr = String(celular).replace(/\D/g, '');
+    
+    // Formato: 300 123 4567
+    if (celularStr.length === 10) {
+      return `${celularStr.slice(0, 3)} ${celularStr.slice(3, 6)} ${celularStr.slice(6)}`;
+    }
+    
+    // Si no tiene 10 dígitos, devolver tal cual
+    return celularStr || "No registrado";
   };
 
   const puedeEditarRol = usuarioActual?.rol === 'presidencia_nacional';
@@ -215,6 +281,27 @@ export default function GestionUsuarios() {
                 />
               </div>
               <div className="form-group">
+                <label>Número de Celular *</label>
+                <input
+                  type="tel"
+                  name="celular"
+                  value={formData.celular}
+                  onChange={handleInputChange}
+                  placeholder="3001234567"
+                  required
+                  maxLength="10"
+                  pattern="\d{10}"
+                />
+                <small className="form-hint">
+                  {formData.celular 
+                    ? `${formData.celular.length}/10 dígitos${formData.celular.length === 10 ? ' ✓' : ''}`
+                    : 'Ingresa 10 dígitos (ej: 3001234567)'}
+                </small>
+              </div>
+            </div>
+
+            <div className="form-row">
+              <div className="form-group">
                 <label>Departamento *</label>
                 <input
                   type="text"
@@ -229,30 +316,29 @@ export default function GestionUsuarios() {
                   <small className="form-hint">Usuarios de tu departamento únicamente</small>
                 )}
               </div>
-            </div>
-
-            <div className="form-group">
-              <label>Rol *</label>
-              <select
-                name="rol"
-                value={formData.rol}
-                onChange={handleInputChange}
-                required
-                disabled={!puedeEditarRol}
-              >
-                <option value="usuario">Usuario</option>
-                {puedeEditarRol && <option value="presidencia">Presidencia</option>}
-              </select>
-              {!puedeEditarRol && (
-                <small className="form-hint">Solo puedes crear usuarios normales</small>
-              )}
+              <div className="form-group">
+                <label>Rol *</label>
+                <select
+                  name="rol"
+                  value={formData.rol}
+                  onChange={handleInputChange}
+                  required
+                  disabled={!puedeEditarRol}
+                >
+                  <option value="usuario">Usuario</option>
+                  {puedeEditarRol && <option value="presidencia">Presidencia</option>}
+                </select>
+                {!puedeEditarRol && (
+                  <small className="form-hint">Solo puedes crear usuarios normales</small>
+                )}
+              </div>
             </div>
 
             <div className="form-actions">
               <button type="submit" className="btn btn-success">
                 {editingId ? "💾 Actualizar" : "➕ Crear"} Usuario
               </button>
-              <button type="button" className="btn btn-warning" onClick={resetForm}>
+              <button type="button" className="btn btn-warning" onClick={handleCancelar}>
                 ✕ Cancelar
               </button>
             </div>
@@ -276,6 +362,7 @@ export default function GestionUsuarios() {
               <tr>
                 <th>Email</th>
                 <th>Nombre</th>
+                <th>Celular</th>
                 <th>Departamento</th>
                 <th>Rol</th>
                 <th>Estado</th>
@@ -287,6 +374,9 @@ export default function GestionUsuarios() {
                 <tr key={usuario.id_usuario}>
                   <td className="email-cell">{usuario.email}</td>
                   <td>{usuario.nombre}</td>
+                  <td className="celular-cell">
+                    📱 {formatCelular(usuario.celular)}
+                  </td>
                   <td>{usuario.departamento}</td>
                   <td>
                     <span className={`rol-badge rol-${usuario.rol}`}>

@@ -5,7 +5,7 @@ import pool from '../config/db.js';
 export const getUsuarios = async (rolSolicitante, departamentoSolicitante) => {
   try {
     let query = `
-      SELECT id_usuario, email, nombre, departamento, rol, activo, fecha_creacion
+      SELECT id_usuario, email, nombre, celular, departamento, rol, activo, fecha_creacion
       FROM usuarios
       WHERE 1=1
     `;
@@ -22,21 +22,39 @@ export const getUsuarios = async (rolSolicitante, departamentoSolicitante) => {
 
     query += ` ORDER BY fecha_creacion DESC`;
 
+    console.log('🔍 Query usuarios:', query);
+    console.log('📊 Params:', params);
+
     const [usuarios] = await pool.query(query, params);
+    
+    console.log('✅ Usuarios obtenidos:', usuarios.length);
+    if (usuarios.length > 0) {
+      console.log('📱 Ejemplo de usuario con celular:', {
+        email: usuarios[0].email,
+        celular: usuarios[0].celular,
+        tipo_celular: typeof usuarios[0].celular
+      });
+    }
+    
     return usuarios;
   } catch (error) {
-    console.error('Error en getUsuarios service:', error);
+    console.error('❌ Error en getUsuarios service:', error);
     throw error;
   }
 };
 
 export const createUsuario = async (data, rolCreador, departamentoCreador) => {
   try {
-    const { email, password, nombre, departamento, rol } = data;
+    const { email, password, nombre, celular, departamento, rol } = data;
 
     // Validaciones
     if (!email || !password || !nombre || !departamento || !rol) {
       throw new Error('Todos los campos son requeridos');
+    }
+
+    // Validar formato de celular (opcional pero recomendado)
+    if (celular && !/^\d{10}$/.test(celular.replace(/\s/g, ''))) {
+      throw new Error('El número de celular debe tener 10 dígitos');
     }
 
     // Validar permisos según el rol del creador
@@ -70,15 +88,16 @@ export const createUsuario = async (data, rolCreador, departamentoCreador) => {
 
     // Insertar usuario
     const [result] = await pool.query(
-      `INSERT INTO usuarios (email, password_hash, nombre, departamento, rol, activo) 
-       VALUES (?, ?, ?, ?, ?, TRUE)`,
-      [email, passwordHash, nombre, departamento, rol]
+      `INSERT INTO usuarios (email, password_hash, nombre, celular, departamento, rol, activo) 
+       VALUES (?, ?, ?, ?, ?, ?, TRUE)`,
+      [email, passwordHash, nombre, celular || null, departamento, rol]
     );
 
     return {
       id_usuario: result.insertId,
       email,
       nombre,
+      celular: celular || null,
       departamento,
       rol,
       activo: true
@@ -91,7 +110,7 @@ export const createUsuario = async (data, rolCreador, departamentoCreador) => {
 
 export const updateUsuario = async (id, data, rolCreador, departamentoCreador) => {
   try {
-    const { nombre, departamento, rol, password } = data;
+    const { nombre, celular, departamento, rol, password } = data;
 
     // Obtener usuario actual
     const [usuarios] = await pool.query(
@@ -121,6 +140,11 @@ export const updateUsuario = async (id, data, rolCreador, departamentoCreador) =
       throw new Error('No se puede asignar el rol de Presidencia Nacional');
     }
 
+    // Validar formato de celular si se proporciona
+    if (celular && !/^\d{10}$/.test(celular.replace(/\s/g, ''))) {
+      throw new Error('El número de celular debe tener 10 dígitos');
+    }
+
     // Construir query de actualización
     const updates = [];
     const params = [];
@@ -128,6 +152,11 @@ export const updateUsuario = async (id, data, rolCreador, departamentoCreador) =
     if (nombre) {
       updates.push('nombre = ?');
       params.push(nombre);
+    }
+
+    if (celular !== undefined) {
+      updates.push('celular = ?');
+      params.push(celular || null);
     }
 
     if (departamento && rolCreador === 'presidencia_nacional') {
@@ -159,7 +188,7 @@ export const updateUsuario = async (id, data, rolCreador, departamentoCreador) =
 
     // Retornar usuario actualizado
     const [updated] = await pool.query(
-      'SELECT id_usuario, email, nombre, departamento, rol, activo FROM usuarios WHERE id_usuario = ?',
+      'SELECT id_usuario, email, nombre, celular, departamento, rol, activo FROM usuarios WHERE id_usuario = ?',
       [id]
     );
 
@@ -235,7 +264,7 @@ export const toggleActivo = async (id) => {
     );
 
     const [updated] = await pool.query(
-      'SELECT id_usuario, email, nombre, departamento, rol, activo FROM usuarios WHERE id_usuario = ?',
+      'SELECT id_usuario, email, nombre, celular, departamento, rol, activo FROM usuarios WHERE id_usuario = ?',
       [id]
     );
 
