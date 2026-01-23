@@ -3,13 +3,16 @@ import * as api from "../services/api";
 
 export default function Cargos() {
   const [cargos, setCargos] = useState([]);
+  const [municipiosPorCargo, setMunicipiosPorCargo] = useState({});
   const [municipios, setMunicipios] = useState([]);
   const [loading, setLoading] = useState(false);
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [alert, setAlert] = useState(null);
+  
+  // ⚠️ CRÍTICO: Solo almacena el ID del cargo expandido (igual que departamentoExpandido)
   const [cargoExpandido, setCargoExpandido] = useState(null);
-  const [municipiosPorCargo, setMunicipiosPorCargo] = useState({});
+  
   const [formData, setFormData] = useState({ 
     nombre_cargo: "", 
     salario: "",
@@ -21,7 +24,6 @@ export default function Cargos() {
     fetchMunicipios();
   }, []);
 
-  // Limpiar formulario cuando se cierra
   useEffect(() => {
     if (!showForm) {
       setFormData({ nombre_cargo: "", salario: "", municipios: [] });
@@ -60,10 +62,8 @@ export default function Cargos() {
       const index = municipiosActuales.indexOf(id_municipio);
       
       if (index > -1) {
-        // Si ya está seleccionado, quitarlo
         municipiosActuales.splice(index, 1);
       } else {
-        // Si no está seleccionado, agregarlo
         municipiosActuales.push(id_municipio);
       }
       
@@ -73,10 +73,8 @@ export default function Cargos() {
 
   const handleSelectAll = () => {
     if (formData.municipios.length === municipios.length) {
-      // Si todos están seleccionados, deseleccionar todos
       setFormData({ ...formData, municipios: [] });
     } else {
-      // Si no todos están seleccionados, seleccionar todos
       setFormData({ ...formData, municipios: municipios.map(m => m.id_municipio) });
     }
   };
@@ -84,7 +82,6 @@ export default function Cargos() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    // Validaciones
     if (!formData.nombre_cargo.trim()) {
       showAlert("El nombre del cargo es requerido", "danger");
       return;
@@ -117,12 +114,11 @@ export default function Cargos() {
 
   const handleEdit = async (cargo) => {
     try {
-      // Cargar los municipios asociados al cargo
       const { data } = await api.getMunicipiosByCargo(cargo.id_cargo);
       
       if (data.success && data.data.length > 0) {
         const municipiosIds = data.data.map(m => m.id_municipio);
-        const salario = data.data[0].salario; // Asumiendo que todos tienen el mismo salario
+        const salario = data.data[0].salario;
         
         setFormData({
           nombre_cargo: cargo.nombre_cargo,
@@ -157,19 +153,27 @@ export default function Cargos() {
     }
   };
 
+  // ⚠️ FUNCIÓN CRÍTICA - COPIADA EXACTAMENTE DE toggleDepartamento
   const toggleMunicipios = async (id_cargo) => {
+    console.log("🔵 ANTES - cargoExpandido:", cargoExpandido, "id_cargo clickeado:", id_cargo);
+    console.log("🔵 ¿Son iguales?", cargoExpandido === id_cargo);
+    
     if (cargoExpandido === id_cargo) {
       // Si el cargo ya está expandido, colapsarlo
+      console.log("🔴 CERRANDO cargo:", id_cargo);
       setCargoExpandido(null);
     } else {
       // Si no está expandido, expandir este y colapsar cualquier otro
+      console.log("🟢 ABRIENDO cargo:", id_cargo, "| Cerrando:", cargoExpandido);
       setCargoExpandido(id_cargo);
       
       // Cargar municipios si no existen
       if (!municipiosPorCargo[id_cargo]) {
+        console.log("📥 Cargando municipios para cargo:", id_cargo);
         try {
           const { data } = await api.getMunicipiosByCargo(id_cargo);
           if (data.success) {
+            console.log("✅ Municipios cargados:", data.data.length);
             setMunicipiosPorCargo(prev => ({
               ...prev,
               [id_cargo]: data.data
@@ -178,6 +182,8 @@ export default function Cargos() {
         } catch (error) {
           console.error("Error cargando municipios:", error);
         }
+      } else {
+        console.log("ℹ️ Municipios ya están en cache");
       }
     }
   };
@@ -321,7 +327,12 @@ export default function Cargos() {
       ) : (
         <div style={{ marginTop: "2rem", display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(350px, 1fr))", gap: "1.5rem" }}>
           {cargos.map((cargo) => {
+            // ⚠️ CRÍTICO: Comparación exacta igual que en Departamentos
             const estaExpandido = cargoExpandido === cargo.id_cargo;
+            
+            console.log(`📋 Cargo: ${cargo.nombre_cargo} (ID: ${cargo.id_cargo})`);
+            console.log(`   - cargoExpandido actual: ${cargoExpandido}`);
+            console.log(`   - estaExpandido: ${estaExpandido}`);
             
             return (
               <div key={cargo.id_cargo} className="card">
@@ -337,7 +348,8 @@ export default function Cargos() {
                   {estaExpandido ? "▼ Ocultar" : "▶ Ver"} Municipios y Salarios
                 </button>
 
-                {estaExpandido && (
+                {/* ⚠️ CRÍTICO: Solo renderiza si estaExpandido === true */}
+                {estaExpandido ? (
                   <div style={{ 
                     background: "#f9f9f9", 
                     padding: "1rem", 
@@ -371,7 +383,7 @@ export default function Cargos() {
                       <div className="loading-municipios">Cargando municipios...</div>
                     )}
                   </div>
-                )}
+                ) : null}
 
                 <div className="action-buttons">
                   <button
