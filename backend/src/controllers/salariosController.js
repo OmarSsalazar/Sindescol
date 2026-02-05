@@ -3,7 +3,29 @@ import * as salariosService from '../services/salariosService.js';
 export const salariosController = {
   getSalarios: async (req, res) => {
     try {
-      const { departamento, rol } = req.user;
+      const { id_cargo, id_municipio } = req.query;
+      const { departamento, rol } = req.user || {};
+
+      console.log('💵 GET /salarios - Datos recibidos:', {
+        id_cargo,
+        id_municipio,
+        departamento,
+        rol,
+        userExists: !!req.user
+      });
+
+      if (!req.user) {
+        return res.status(401).json({ success: false, message: 'Usuario no autenticado' });
+      }
+
+      // Si se proporcionan parámetros de búsqueda específica
+      if (id_cargo && id_municipio) {
+        console.log(`💵 GET /salarios?id_cargo=${id_cargo}&id_municipio=${id_municipio}`);
+        const salarios = await salariosService.getSalariosByCargoAndMunicipio(id_cargo, id_municipio, departamento, rol);
+        return res.json({ success: true, data: salarios });
+      }
+
+      // Si no hay parámetros, retornar todos
       console.log(`💵 GET /salarios - Rol: ${rol}, Departamento: ${departamento || 'TODOS'}`);
       const salarios = await salariosService.getSalarios(departamento, rol);
       res.json({ success: true, data: salarios });

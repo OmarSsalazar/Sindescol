@@ -8,42 +8,52 @@ import db from '../config/db.js';
  */
 export const login = async (req, res) => {
   try {
-    const { correo, contrasena } = req.body;
+    const { email, password } = req.body;
 
     // Validar datos
-    if (!correo || !contrasena) {
+    if (!email || !password) {
       return res.status(400).json({ 
         success: false,
-        message: 'Correo y contraseña son requeridos' 
+        message: 'Email y contraseña son requeridos' 
       });
     }
 
-    console.log('🔑 Intento de login:', correo);
+    console.log('🔑 Intento de login:', email);
 
     // Buscar usuario en la base de datos
-    const [usuarios] = await db.query(
-      'SELECT id_usuario, correo, contrasena, rol, departamento FROM usuarios WHERE correo = ?',
-      [correo]
-    );
+    let usuarios;
+    try {
+      [usuarios] = await db.query(
+        'SELECT id_usuario, email, password_hash, rol, departamento FROM usuarios WHERE email = ?',
+        [email]
+      );
+    } catch (dbError) {
+      console.error('❌ Error de base de datos:', dbError.message);
+      return res.status(500).json({ 
+        success: false,
+        message: 'Error en la conexión a la base de datos',
+        error: dbError.message 
+      });
+    }
 
     if (usuarios.length === 0) {
-      console.log('❌ Usuario no encontrado:', correo);
+      console.log('❌ Usuario no encontrado:', email);
       return res.status(401).json({ 
         success: false,
-        message: 'Correo o contraseña incorrectos' 
+        message: 'Email o contraseña incorrectos' 
       });
     }
 
     const usuario = usuarios[0];
 
     // Verificar contraseña
-    const passwordValido = await bcrypt.compare(contrasena, usuario.contrasena);
+    const passwordValido = await bcrypt.compare(password, usuario.password_hash);
 
     if (!passwordValido) {
-      console.log('❌ Contraseña incorrecta para:', correo);
+      console.log('❌ Contraseña incorrecta para:', email);
       return res.status(401).json({ 
         success: false,
-        message: 'Correo o contraseña incorrectos' 
+        message: 'Email o contraseña incorrectos' 
       });
     }
 
@@ -51,7 +61,7 @@ export const login = async (req, res) => {
     const token = jwt.sign(
       {
         id_usuario: usuario.id_usuario,
-        correo: usuario.correo,
+        email: usuario.email,
         rol: usuario.rol,                     // ⭐ presidencia_nacional, presidencia, usuario
         departamento: usuario.departamento    // ⭐ Antioquia, Nariño, Valle del Cauca, Cesar, o NULL
       },
@@ -60,7 +70,7 @@ export const login = async (req, res) => {
     );
 
     console.log('✅ Login exitoso:', {
-      correo: usuario.correo,
+      email: usuario.email,
       rol: usuario.rol,
       departamento: usuario.departamento || 'TODOS (Presidencia Nacional)'
     });
@@ -69,12 +79,14 @@ export const login = async (req, res) => {
     res.json({
       success: true,
       message: 'Login exitoso',
-      token,
-      usuario: {
-        id_usuario: usuario.id_usuario,
-        correo: usuario.correo,
-        rol: usuario.rol,
-        departamento: usuario.departamento
+      data: {
+        token,
+        usuario: {
+          id_usuario: usuario.id_usuario,
+          email: usuario.email,
+          rol: usuario.rol,
+          departamento: usuario.departamento
+        }
       }
     });
 
@@ -93,13 +105,13 @@ export const login = async (req, res) => {
  */
 export const register = async (req, res) => {
   try {
-    const { correo, contrasena, rol, departamento } = req.body;
+    const { email, password, rol, departamento } = req.body;
 
     // Validar datos requeridos
-    if (!correo || !contrasena || !rol) {
+    if (!email || !password || !rol) {
       return res.status(400).json({ 
         success: false,
-        message: 'Correo, contraseña y rol son requeridos' 
+        message: 'Email, contraseña y rol son requeridos' 
       });
     }
 
@@ -128,34 +140,34 @@ export const register = async (req, res) => {
       });
     }
 
-    console.log('📝 Registro de nuevo usuario:', { correo, rol, departamento });
+    console.log('📝 Registro de nuevo usuario:', { email, rol, departamento });
 
-    // Verificar si el correo ya existe
+    // Verificar si el email ya existe
     const [existente] = await db.query(
-      'SELECT id_usuario FROM usuarios WHERE correo = ?',
-      [correo]
+      'SELECT id_usuario FROM usuarios WHERE email = ?',
+      [email]
     );
 
     if (existente.length > 0) {
       return res.status(400).json({ 
         success: false,
-        message: 'El correo ya está registrado' 
+        message: 'El email ya está registrado' 
       });
     }
 
     // Encriptar contraseña
     const salt = await bcrypt.genSalt(10);
-    const contrasenaHash = await bcrypt.hash(contrasena, salt);
+    const passwordHash = await bcrypt.hash(password, salt);
 
     // Insertar nuevo usuario
     const [result] = await db.query(
-      'INSERT INTO usuarios (correo, contrasena, rol, departamento) VALUES (?, ?, ?, ?)',
-      [correo, contrasenaHash, rol, departamento || null]
+      'INSERT INTO usuarios (email, password_hash, rol, departamento) VALUES (?, ?, ?, ?)',
+      [email, passwordHash, rol, departamento || null]
     );
 
     console.log('✅ Usuario registrado:', { 
       id_usuario: result.insertId, 
-      correo, 
+      email, 
       rol, 
       departamento: departamento || 'NULL' 
     });
@@ -165,7 +177,7 @@ export const register = async (req, res) => {
       message: 'Usuario registrado exitosamente',
       usuario: {
         id_usuario: result.insertId,
-        correo,
+        email,
         rol,
         departamento: departamento || null
       }
@@ -191,7 +203,7 @@ export const verifyToken = async (req, res) => {
       message: 'Token válido',
       usuario: {
         id_usuario: req.user.id_usuario,
-        correo: req.user.correo,
+        email: req.user.email,
         rol: req.user.rol,
         departamento: req.user.departamento
       }
@@ -210,7 +222,7 @@ export const verifyToken = async (req, res) => {
  */
 export const logout = async (req, res) => {
   try {
-    console.log('👋 Logout de usuario:', req.user.correo);
+    console.log('👋 Logout de usuario:', req.user.email);
     
     res.json({
       success: true,
@@ -241,7 +253,7 @@ export const changePassword = async (req, res) => {
 
     // Obtener usuario actual
     const [usuarios] = await db.query(
-      'SELECT contrasena FROM usuarios WHERE id_usuario = ?',
+      'SELECT password_hash FROM usuarios WHERE id_usuario = ?',
       [req.user.id_usuario]
     );
 
@@ -253,7 +265,7 @@ export const changePassword = async (req, res) => {
     }
 
     // Verificar contraseña actual
-    const passwordValido = await bcrypt.compare(contrasenaActual, usuarios[0].contrasena);
+    const passwordValido = await bcrypt.compare(contrasenaActual, usuarios[0].password_hash);
 
     if (!passwordValido) {
       return res.status(401).json({ 
@@ -264,15 +276,15 @@ export const changePassword = async (req, res) => {
 
     // Encriptar nueva contraseña
     const salt = await bcrypt.genSalt(10);
-    const contrasenaHash = await bcrypt.hash(contrasenaNueva, salt);
+    const passwordHash = await bcrypt.hash(contrasenaNueva, salt);
 
     // Actualizar contraseña
     await db.query(
-      'UPDATE usuarios SET contrasena = ? WHERE id_usuario = ?',
-      [contrasenaHash, req.user.id_usuario]
+      'UPDATE usuarios SET password_hash = ? WHERE id_usuario = ?',
+      [passwordHash, req.user.id_usuario]
     );
 
-    console.log('✅ Contraseña cambiada para usuario:', req.user.correo);
+    console.log('✅ Contraseña cambiada para usuario:', req.user.email);
 
     res.json({
       success: true,

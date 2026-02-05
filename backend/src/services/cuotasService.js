@@ -24,7 +24,7 @@ export const getCuotas = async (departamento, rol) => {
     console.log(`💰 [presidencia_nacional] Cargando TODAS las cuotas`);
   }
   
-  query += ` ORDER BY c.ano DESC, c.mes DESC, c.cedula`;
+  query += ` ORDER BY c.anio DESC, c.mes DESC, c.cedula`;
   
   const [cuotas] = await db.query(query, params);
   console.log(`✅ Cuotas encontradas: ${cuotas.length}`);

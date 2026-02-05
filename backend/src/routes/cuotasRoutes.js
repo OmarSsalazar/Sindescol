@@ -1,5 +1,5 @@
 import express from 'express';
-import { cuotasController } from '../controllers/otrosControllers.js';
+import { cuotasController } from '../controllers/cuotasController.js';
 
 const router = express.Router();
 
@@ -21,4 +21,4 @@ router.put('/:id', cuotasController.updateCuota);
 // Eliminar cuota (validación automática de departamento)
 router.delete('/:id', cuotasController.deleteCuota);
 
-export default router;
+export default router;  

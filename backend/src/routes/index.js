@@ -8,10 +8,16 @@ import cargosRoutes from './cargosRoutes.js';
 import cuotasRoutes from './cuotasRoutes.js';
 import salariosRoutes from './salariosRoutes.js';
 import municipiosRoutes from './municipiosRoutes.js';
+import departamentosRoutes from './departamentosRoutes.js';
 import institucionesRoutes from './institucionesRoutes.js';
 import religionesRoutes from './religionesRoutes.js';
-import entidadesRoutes from './entidadesRoutes.js';
-import estadisticasRoutes from './estadisticasRoutes.js';
+import arlRoutes from './arlRoutes.js';
+import pensionRoutes from './pensionRoutes.js';
+import epsRoutes from './epsRoutes.js';
+import cesantiasRoutes from './cesantiasRoutes.js';
+import actasRoutes from './actasRoutes.js';
+import otrosCargosRoutes from './otrosCargosRoutes.js';
+import rectoresRoutes from './rectoresRoutes.js';
 
 const router = express.Router();
 
@@ -31,9 +37,15 @@ router.use('/cargos', authenticateToken, cargosRoutes);
 router.use('/cuotas', authenticateToken, cuotasRoutes);
 router.use('/salarios', authenticateToken, salariosRoutes);
 router.use('/municipios', authenticateToken, municipiosRoutes);
+router.use('/departamentos', authenticateToken, departamentosRoutes);
 router.use('/instituciones', authenticateToken, institucionesRoutes);
 router.use('/religiones', authenticateToken, religionesRoutes);
-router.use('/entidades', authenticateToken, entidadesRoutes);
-router.use('/estadisticas', authenticateToken, estadisticasRoutes);
+router.use('/arl', authenticateToken, arlRoutes);
+router.use('/pension', authenticateToken, pensionRoutes);
+router.use('/eps', authenticateToken, epsRoutes);
+router.use('/cesantias', authenticateToken, cesantiasRoutes);
+router.use('/actas', authenticateToken, actasRoutes);
+router.use('/otros-cargos', authenticateToken, otrosCargosRoutes);
+router.use('/rectores', authenticateToken, rectoresRoutes);
 
 export default router;
