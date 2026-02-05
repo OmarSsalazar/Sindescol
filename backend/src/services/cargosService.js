@@ -5,7 +5,7 @@ import db from "../config/db.js";
 // ============================================
 export const getCargos = async (departamento, rol) => {
   let query = `
-    SELECT DISTINCT c.id_cargo, c.nombre_cargo, c.descripcion_cargo,
+    SELECT DISTINCT c.id_cargo, c.nombre_cargo,
            COUNT(DISTINCT a.id_afiliado) as total_afiliados
     FROM cargos c
     LEFT JOIN afiliados a ON c.id_cargo = a.id_cargo
@@ -25,7 +25,7 @@ export const getCargos = async (departamento, rol) => {
     console.log(`📋 [presidencia_nacional] Cargando TODOS los cargos`);
   }
   
-  query += ` GROUP BY c.id_cargo, c.nombre_cargo, c.descripcion_cargo ORDER BY c.nombre_cargo`;
+  query += ` GROUP BY c.id_cargo, c.nombre_cargo ORDER BY c.nombre_cargo`;
   
   const [cargos] = await db.query(query, params);
   console.log(`✅ Cargos encontrados: ${cargos.length}`);
@@ -47,26 +47,26 @@ export const getCargoById = async (id) => {
 // CREAR CARGO (disponible para todos)
 // ============================================
 export const createCargo = async (data) => {
-  const { nombre_cargo, descripcion_cargo } = data;
+  const { nombre_cargo } = data;
   
   const [result] = await db.query(
-    'INSERT INTO cargos (nombre_cargo, descripcion_cargo) VALUES (?, ?)',
-    [nombre_cargo, descripcion_cargo || null]
+    'INSERT INTO cargos (nombre_cargo) VALUES (?)',
+    [nombre_cargo]
   );
   
   console.log(`✅ Cargo creado:`, { id_cargo: result.insertId, nombre_cargo });
-  return { id_cargo: result.insertId, nombre_cargo, descripcion_cargo };
+  return { id_cargo: result.insertId, nombre_cargo };
 };
 
 // ============================================
 // ACTUALIZAR CARGO (disponible para todos)
 // ============================================
 export const updateCargo = async (id, data) => {
-  const { nombre_cargo, descripcion_cargo } = data;
+  const { nombre_cargo } = data;
   
   await db.query(
-    'UPDATE cargos SET nombre_cargo = ?, descripcion_cargo = ? WHERE id_cargo = ?',
-    [nombre_cargo, descripcion_cargo || null, id]
+    'UPDATE cargos SET nombre_cargo = ? WHERE id_cargo = ?',
+    [nombre_cargo, id]
   );
   
   console.log(`✅ Cargo actualizado:`, id);

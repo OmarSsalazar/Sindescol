@@ -134,12 +134,16 @@ function Afiliados() {
   }
 };
 
-  const handleEliminarAfiliado = async (formData) => {
+  const handleEliminarAfiliado = async () => {
   try {
-    console.log("Enviando datos del afiliado...");
-    const response = await fetchWithAuth("/api/afiliados", {
-      method: "POST",
-      body: JSON.stringify(formData)
+    if (!afiliadoSeleccionado) {
+      alert("❌ No hay afiliado seleccionado");
+      return;
+    }
+
+    console.log("Eliminando afiliado con ID:", afiliadoSeleccionado);
+    const response = await fetchWithAuth(`/api/afiliados/${afiliadoSeleccionado}`, {
+      method: "DELETE"
     });
 
     if (!response.ok) {
@@ -157,6 +161,7 @@ function Afiliados() {
     if (data.success) {
       console.log("✅ Afiliado eliminado exitosamente");
       setModalEliminarOpen(false);
+      setAfiliadoSeleccionado(null);
       cargarAfiliados();
       alert("✅ Afiliado eliminado exitosamente");
     } else {

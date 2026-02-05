@@ -1,5 +1,5 @@
 import express from 'express';
-import { cargosController } from '../controllers/otrosControllers.js';
+import { cargosController } from '../controllers/cargosController.js';
 
 const router = express.Router();
 

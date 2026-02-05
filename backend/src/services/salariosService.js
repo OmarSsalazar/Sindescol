@@ -1,12 +1,36 @@
 import db from "../config/db.js";
 
 // ============================================
+// OBTENER SALARIOS POR CARGO Y MUNICIPIO (para cálculos)
+// ============================================
+export const getSalariosByCargoAndMunicipio = async (id_cargo, id_municipio, departamento, rol) => {
+  let query = `
+    SELECT s.*, m.nombre_municipio, m.departamento, c.nombre_cargo
+    FROM salarios_municipios s
+    INNER JOIN municipios m ON s.id_municipio = m.id_municipio
+    LEFT JOIN cargos c ON s.id_cargo = c.id_cargo
+    WHERE s.id_cargo = ? AND s.id_municipio = ?
+  `;
+  
+  const params = [id_cargo, id_municipio];
+  
+  // Si no es presidencia_nacional, validar que pertenezca al departamento del usuario
+  if (rol !== 'presidencia_nacional' && departamento) {
+    query += ` AND m.departamento = ?`;
+    params.push(departamento);
+  }
+  
+  const [salarios] = await db.query(query, params);
+  return salarios;
+};
+
+// ============================================
 // OBTENER SALARIOS CON FILTRADO POR DEPARTAMENTO
 // ============================================
 export const getSalarios = async (departamento, rol) => {
   let query = `
     SELECT s.*, m.nombre_municipio, m.departamento, c.nombre_cargo
-    FROM salarios s
+    FROM salarios_municipios s
     INNER JOIN municipios m ON s.id_municipio = m.id_municipio
     LEFT JOIN cargos c ON s.id_cargo = c.id_cargo
   `;
@@ -35,7 +59,7 @@ export const getSalarios = async (departamento, rol) => {
 export const getSalarioById = async (id) => {
   const [salarios] = await db.query(
     `SELECT s.*, m.nombre_municipio, m.departamento, c.nombre_cargo
-     FROM salarios s
+     FROM salarios_municipios s
      INNER JOIN municipios m ON s.id_municipio = m.id_municipio
      LEFT JOIN cargos c ON s.id_cargo = c.id_cargo
      WHERE s.id_salario = ?`,
@@ -69,7 +93,7 @@ export const createSalario = async (data, departamento, rol) => {
 
   // Verificar si ya existe un salario para ese cargo en ese municipio
   const [existente] = await db.query(
-    'SELECT id_salario FROM salarios WHERE id_municipio = ? AND id_cargo = ?',
+    'SELECT id_salario FROM salarios_municipios WHERE id_municipio = ? AND id_cargo = ?',
     [id_municipio, id_cargo]
   );
 
@@ -78,7 +102,7 @@ export const createSalario = async (data, departamento, rol) => {
   }
 
   const [result] = await db.query(
-    'INSERT INTO salarios (id_municipio, id_cargo, valor_salario) VALUES (?, ?, ?)',
+    'INSERT INTO salarios_municipios (id_municipio, id_cargo, salario) VALUES (?, ?, ?)',
     [id_municipio, id_cargo, valor_salario]
   );
 
@@ -103,7 +127,7 @@ export const updateSalario = async (id, data, departamento, rol) => {
   // VALIDAR QUE EL SALARIO PERTENECE AL DEPARTAMENTO DEL USUARIO
   const [salarioActual] = await db.query(
     `SELECT m.departamento, m.nombre_municipio
-     FROM salarios s
+     FROM salarios_municipios s
      INNER JOIN municipios m ON s.id_municipio = m.id_municipio
      WHERE s.id_salario = ?`,
     [id]
@@ -137,7 +161,7 @@ export const updateSalario = async (id, data, departamento, rol) => {
   }
 
   await db.query(
-    'UPDATE salarios SET id_municipio = ?, id_cargo = ?, valor_salario = ? WHERE id_salario = ?',
+    'UPDATE salarios_municipios SET id_municipio = ?, id_cargo = ?, salario = ? WHERE id_salario = ?',
     [id_municipio, id_cargo, valor_salario, id]
   );
 
@@ -152,7 +176,7 @@ export const deleteSalario = async (id, departamento, rol) => {
   // VALIDAR QUE EL SALARIO PERTENECE AL DEPARTAMENTO DEL USUARIO
   const [salarioActual] = await db.query(
     `SELECT m.departamento, m.nombre_municipio
-     FROM salarios s
+     FROM salarios_municipios s
      INNER JOIN municipios m ON s.id_municipio = m.id_municipio
      WHERE s.id_salario = ?`,
     [id]
@@ -169,7 +193,7 @@ export const deleteSalario = async (id, departamento, rol) => {
     }
   }
 
-  const [result] = await db.query('DELETE FROM salarios WHERE id_salario = ?', [id]);
+  const [result] = await db.query('DELETE FROM salarios_municipios WHERE id_salario = ?', [id]);
   console.log(`✅ [${rol}] Salario eliminado:`, id);
   return result.affectedRows > 0;
 };
@@ -197,7 +221,7 @@ export const getSalariosByMunicipio = async (id_municipio, departamento, rol) =>
 
   const [salarios] = await db.query(
     `SELECT s.*, c.nombre_cargo
-     FROM salarios s
+     FROM salarios_municipios s
      LEFT JOIN cargos c ON s.id_cargo = c.id_cargo
      WHERE s.id_municipio = ?
      ORDER BY c.nombre_cargo`,
@@ -213,7 +237,7 @@ export const getSalariosByMunicipio = async (id_municipio, departamento, rol) =>
 export const getSalariosByCargo = async (id_cargo, departamento, rol) => {
   let query = `
     SELECT s.*, m.nombre_municipio, m.departamento
-    FROM salarios s
+    FROM salarios_municipios s
     INNER JOIN municipios m ON s.id_municipio = m.id_municipio
     WHERE s.id_cargo = ?
   `;

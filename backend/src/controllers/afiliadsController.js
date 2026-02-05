@@ -7,7 +7,7 @@ export const getAfiliados = async (req, res) => {
   try {
     const { departamento, rol } = req.user; // Del middleware de autenticación
     
-    console.log(`📋 GET /afiliados - Usuario: ${req.user.correo}, Rol: ${rol}, Departamento: ${departamento || 'TODOS'}`);
+    console.log(`📋 GET /afiliados - Usuario: ${req.user.email}, Rol: ${rol}, Departamento: ${departamento || 'TODOS'}`);
     
     const afiliados = await afiliadsService.getAfiliados(departamento, rol);
     res.json({ success: true, data: afiliados });
@@ -78,7 +78,7 @@ export const createAfiliado = async (req, res) => {
   try {
     const { departamento, rol } = req.user;
     
-    console.log(`➕ POST /afiliados - Usuario: ${req.user.correo}, Rol: ${rol}, Departamento: ${departamento || 'TODOS'}`);
+    console.log(`➕ POST /afiliados - Usuario: ${req.user.email}, Rol: ${rol}, Departamento: ${departamento || 'TODOS'}`);
     
     const afiliado = await afiliadsService.createAfiliado(req.body, departamento, rol);
     res.status(201).json({ success: true, data: afiliado });
@@ -95,7 +95,7 @@ export const updateAfiliado = async (req, res) => {
   try {
     const { departamento, rol } = req.user;
     
-    console.log(`✏️ PUT /afiliados/${req.params.id} - Usuario: ${req.user.correo}, Rol: ${rol}, Departamento: ${departamento || 'TODOS'}`);
+    console.log(`✏️ PUT /afiliados/${req.params.id} - Usuario: ${req.user.email}, Rol: ${rol}, Departamento: ${departamento || 'TODOS'}`);
     
     const afiliado = await afiliadsService.updateAfiliado(req.params.id, req.body, departamento, rol);
     res.json({ success: true, data: afiliado });
@@ -112,7 +112,7 @@ export const deleteAfiliado = async (req, res) => {
   try {
     const { departamento, rol } = req.user;
     
-    console.log(`🗑️ DELETE /afiliados/${req.params.id} - Usuario: ${req.user.correo}, Rol: ${rol}, Departamento: ${departamento || 'TODOS'}`);
+    console.log(`🗑️ DELETE /afiliados/${req.params.id} - Usuario: ${req.user.email}, Rol: ${rol}, Departamento: ${departamento || 'TODOS'}`);
     
     const success = await afiliadsService.deleteAfiliado(req.params.id, departamento, rol);
     
@@ -139,7 +139,7 @@ export const searchAfiliados = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Parámetro de búsqueda requerido' });
     }
 
-    console.log(`🔍 SEARCH /afiliados?q=${q} - Usuario: ${req.user.correo}, Rol: ${rol}, Departamento: ${departamento || 'TODOS'}`);
+    console.log(`🔍 SEARCH /afiliados?q=${q} - Usuario: ${req.user.email}, Rol: ${rol}, Departamento: ${departamento || 'TODOS'}`);
     
     const afiliados = await afiliadsService.searchAfiliados(q, departamento, rol);
     res.json({ success: true, data: afiliados });

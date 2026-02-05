@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import * as api from "../../services/api";
+import { fetchWithAuth } from "../../utils/fetchWithAuth";
 import "./ModalCrearAfiliado.css";
 
 export const ModalEditarAfiliado = ({ isOpen, onClose, afiliadoId, onSubmit }) => {

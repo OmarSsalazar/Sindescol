@@ -23,13 +23,13 @@ export const authenticateToken = (req, res, next) => {
     // ⭐ IMPORTANTE: Agregar toda la información del usuario a req.user
     req.user = {
       id_usuario: decoded.id_usuario,
-      correo: decoded.correo,
+      email: decoded.email,
       rol: decoded.rol,                     
       departamento: decoded.departamento    
     };
 
     console.log('🔐 Usuario autenticado:', {
-      correo: req.user.correo,
+      email: req.user.email,
       rol: req.user.rol,
       departamento: req.user.departamento || 'TODOS (Presidencia Nacional)'
     });
