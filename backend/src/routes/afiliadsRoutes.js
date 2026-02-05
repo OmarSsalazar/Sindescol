@@ -1,14 +1,43 @@
-import express from "express";
-import * as afiliadsController from "../controllers/afiliadsController.js";
+import express from 'express';
+import {
+  getAfiliados,
+  getAfiliadoById,
+  getAfiliadoByCedula,
+  createAfiliado,
+  updateAfiliado,
+  deleteAfiliado,
+  searchAfiliados
+} from '../controllers/afiliadsController.js';
 
 const router = express.Router();
 
-router.get("/", afiliadsController.getAfiliados);
-router.get("/search", afiliadsController.searchAfiliados);
-router.get("/:id", afiliadsController.getAfiliadoById);
-router.get("/cedula/:cedula", afiliadsController.getAfiliadoByCedula);
-router.post("/", afiliadsController.createAfiliado);
-router.put("/:id", afiliadsController.updateAfiliado);
-router.delete("/:id", afiliadsController.deleteAfiliado);
+// ============================================
+// RUTAS DE AFILIADOS
+// ============================================
+// NOTA: Ya no necesitamos filtrarPorDepartamento como middleware
+// El filtrado se hace automáticamente en el servicio usando:
+// - req.user.departamento
+// - req.user.rol
+
+// Listar todos los afiliados (filtrado automático por departamento)
+router.get('/', getAfiliados);
+
+// Buscar afiliados (filtrado automático por departamento)
+router.get('/search', searchAfiliados);
+
+// Obtener afiliado por ID
+router.get('/:id', getAfiliadoById);
+
+// Obtener afiliado por cédula
+router.get('/cedula/:cedula', getAfiliadoByCedula);
+
+// Crear afiliado (validación automática de departamento)
+router.post('/', createAfiliado);
+
+// Actualizar afiliado (validación automática de departamento)
+router.put('/:id', updateAfiliado);
+
+// Eliminar afiliado (validación automática de departamento)
+router.delete('/:id', deleteAfiliado);
 
 export default router;

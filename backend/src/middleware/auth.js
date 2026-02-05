@@ -1,71 +1,82 @@
-// backend/src/middleware/auth.js
 import jwt from 'jsonwebtoken';
 
-export const verificarToken = (req, res, next) => {
-  const token = req.headers.authorization?.split(' ')[1];
-  
+/**
+ * Middleware para autenticar el token JWT
+ * Extrae: id_usuario, correo, rol, departamento
+ */
+export const authenticateToken = (req, res, next) => {
+  // Obtener el token del header Authorization
+  const authHeader = req.headers['authorization'];
+  const token = authHeader && authHeader.split(' ')[1]; // Bearer TOKEN
+
   if (!token) {
-    console.log('❌ No se proporcionó token');
     return res.status(401).json({ 
-      success: false, 
-      error: 'No autorizado - Token requerido' 
+      success: false,
+      message: 'Token no proporcionado. Acceso denegado.' 
     });
   }
-  
+
   try {
-    const decoded = jwt.verify(
-      token, 
-      process.env.JWT_SECRET || 'sindescol-super-secreto-2025-cambiar-en-produccion'
-    );
-    
-    console.log('✅ Token válido para usuario:', decoded.email, 'Rol:', decoded.rol);
-    req.usuario = decoded;
+    // Verificar y decodificar el token
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+    // ⭐ IMPORTANTE: Agregar toda la información del usuario a req.user
+    req.user = {
+      id_usuario: decoded.id_usuario,
+      correo: decoded.correo,
+      rol: decoded.rol,                     
+      departamento: decoded.departamento    
+    };
+
+    console.log('🔐 Usuario autenticado:', {
+      correo: req.user.correo,
+      rol: req.user.rol,
+      departamento: req.user.departamento || 'TODOS (Presidencia Nacional)'
+    });
+
     next();
   } catch (error) {
-    console.log('❌ Token inválido:', error.message);
-    return res.status(401).json({ 
-      success: false, 
-      error: 'Token inválido o expirado' 
-    });
-  }
-};
-
-export const filtrarPorDepartamento = (req, res, next) => {
-  // Si es presidencia_nacional, no filtrar
-  if (req.usuario.rol === 'presidencia_nacional') {
-    req.departamento = null; // null = ver todos
-    console.log('🔓 Presidencia Nacional - Acceso total');
-  } else {
-    req.departamento = req.usuario.departamento;
-    console.log('🔒 Filtro aplicado - Departamento:', req.departamento);
-  }
-  next();
-};
-
-// Nuevo middleware para verificar permisos de gestión de usuarios
-export const verificarPermisoGestionUsuarios = (req, res, next) => {
-  const rol = req.usuario.rol;
-  
-  if (rol === 'usuario') {
+    console.error('❌ Error verificando token:', error.message);
+    
+    if (error.name === 'TokenExpiredError') {
+      return res.status(403).json({ 
+        success: false,
+        message: 'Token expirado. Por favor, inicia sesión nuevamente.' 
+      });
+    }
+    
     return res.status(403).json({ 
-      success: false, 
-      error: 'No tienes permisos para gestionar usuarios' 
+      success: false,
+      message: 'Token inválido. Acceso denegado.' 
     });
   }
-  
-  console.log('✅ Permiso de gestión de usuarios verificado para:', req.usuario.email);
-  next();
 };
 
-// Middleware para verificar si es presidencia nacional
-export const verificarPresidenciaNacional = (req, res, next) => {
-  if (req.usuario.rol !== 'presidencia_nacional') {
-    return res.status(403).json({ 
-      success: false, 
-      error: 'Solo Presidencia Nacional puede realizar esta acción' 
-    });
-  }
-  
-  console.log('✅ Verificado como Presidencia Nacional');
-  next();
+/**
+ * Middleware para verificar que el usuario tiene un rol específico
+ * Uso: router.delete('/afiliados/:id', authenticateToken, requireRole('presidencia_nacional'), deleteAfiliado)
+ */
+export const requireRole = (...rolesPermitidos) => {
+  return (req, res, next) => {
+    if (!req.user || !req.user.rol) {
+      return res.status(401).json({ 
+        success: false,
+        message: 'Usuario no autenticado' 
+      });
+    }
+
+    if (!rolesPermitidos.includes(req.user.rol)) {
+      return res.status(403).json({ 
+        success: false,
+        message: `Acceso denegado. Se requiere rol: ${rolesPermitidos.join(' o ')}` 
+      });
+    }
+
+    next();
+  };
 };
+
+/**
+ * Middleware para verificar que el usuario tiene presidencia_nacional
+ */
+export const requirePresidenciaNacional = requireRole('presidencia_nacional');
