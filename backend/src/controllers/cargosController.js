@@ -26,6 +26,17 @@ export const cargosController = {
     }
   },
 
+  getMunicipiosByCargo: async (req, res) => {
+    try {
+      const { departamento, rol } = req.user;
+      const municipios = await cargosService.getMunicipiosByCargo(req.params.id, departamento, rol);
+      res.json({ success: true, data: municipios });
+    } catch (error) {
+      console.error('Error en getMunicipiosByCargo:', error);
+      res.status(500).json({ success: false, message: error.message });
+    }
+  },
+
   createCargo: async (req, res) => {
     try {
       const { rol } = req.user;

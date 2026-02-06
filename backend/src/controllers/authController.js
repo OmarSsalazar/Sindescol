@@ -24,7 +24,7 @@ export const login = async (req, res) => {
     let usuarios;
     try {
       [usuarios] = await db.query(
-        'SELECT id_usuario, email, password_hash, rol, departamento FROM usuarios WHERE email = ?',
+        'SELECT id_usuario, email, nombre, password_hash, rol, departamento FROM usuarios WHERE email = ?',
         [email]
       );
     } catch (dbError) {
@@ -84,6 +84,7 @@ export const login = async (req, res) => {
         usuario: {
           id_usuario: usuario.id_usuario,
           email: usuario.email,
+          nombre: usuario.nombre,
           rol: usuario.rol,
           departamento: usuario.departamento
         }

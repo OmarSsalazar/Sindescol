@@ -3,8 +3,8 @@ import * as usuariosService from "../services/usuariosService.js";
 
 export const getUsuarios = async (req, res) => {
   try {
-    const rol = req.usuario.rol;
-    const departamento = req.usuario.departamento;
+    const rol = req.user.rol;
+    const departamento = req.user.departamento;
     
     const usuarios = await usuariosService.getUsuarios(rol, departamento);
     res.json({ success: true, data: usuarios });
@@ -14,10 +14,23 @@ export const getUsuarios = async (req, res) => {
   }
 };
 
+export const getPresidencias = async (req, res) => {
+  try {
+    const rol = req.user.rol;
+    const departamento = req.user.departamento;
+    
+    const presidencias = await usuariosService.getPresidencias(rol, departamento);
+    res.json({ success: true, data: presidencias });
+  } catch (error) {
+    console.error("Error en getPresidencias:", error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+};
+
 export const createUsuario = async (req, res) => {
   try {
-    const rolCreador = req.usuario.rol;
-    const departamentoCreador = req.usuario.departamento;
+    const rolCreador = req.user.rol;
+    const departamentoCreador = req.user.departamento;
     
     const usuario = await usuariosService.createUsuario(
       req.body, 
@@ -35,8 +48,8 @@ export const createUsuario = async (req, res) => {
 export const updateUsuario = async (req, res) => {
   try {
     const { id } = req.params;
-    const rolCreador = req.usuario.rol;
-    const departamentoCreador = req.usuario.departamento;
+    const rolCreador = req.user.rol;
+    const departamentoCreador = req.user.departamento;
     
     const usuario = await usuariosService.updateUsuario(
       id, 
@@ -59,8 +72,8 @@ export const updateUsuario = async (req, res) => {
 export const deleteUsuario = async (req, res) => {
   try {
     const { id } = req.params;
-    const rolCreador = req.usuario.rol;
-    const idUsuarioActual = req.usuario.id_usuario;
+    const rolCreador = req.user.rol;
+    const idUsuarioActual = req.user.id_usuario;
     
     const deleted = await usuariosService.deleteUsuario(
       id, 

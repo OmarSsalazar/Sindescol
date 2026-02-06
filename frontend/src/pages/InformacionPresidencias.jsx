@@ -20,15 +20,12 @@ export default function InformacionPresidencias() {
   const cargarPresidencias = async () => {
     setLoading(true);
     try {
-      const response = await fetchWithAuth("/api/usuarios");
+      const response = await fetchWithAuth("/api/usuarios/presidencias/list");
       const data = await response.json();
       
       if (data.success) {
-        // Filtrar solo usuarios con rol 'presidencia' o 'presidencia_nacional'
-        const soloPresidencias = (data.data || []).filter(usuario => 
-          usuario.rol === 'presidencia' || usuario.rol === 'presidencia_nacional'
-        );
-        setPresidencias(soloPresidencias);
+        // Ya viene filtrado desde el backend según el rol
+        setPresidencias(data.data || []);
       }
     } catch (error) {
       console.error('Error cargando presidencias:', error);

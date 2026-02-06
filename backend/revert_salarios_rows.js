@@ -3,9 +3,9 @@ import db from "./src/config/db.js";
 
 const run = async () => {
   try {
-    console.log('Eliminando filas de ejemplo de la tabla `salarios`...');
+    console.log('Eliminando filas de ejemplo de la tabla `salarios_municipios`...');
     const res = await db.query(
-      `DELETE FROM salarios WHERE (id_cargo = 1 AND id_municipio = 1)
+      `DELETE FROM salarios_municipios WHERE (id_cargo = 1 AND id_municipio = 1)
         OR (id_cargo = 2 AND id_municipio = 1)
         OR (id_cargo = 1 AND id_municipio = 2)
         OR (id_cargo = 3 AND id_municipio = 4)`

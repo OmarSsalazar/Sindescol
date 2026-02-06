@@ -3,15 +3,17 @@ import db from "./src/config/db.js";
 
 const run = async () => {
   try {
-    console.log('Creando tabla `salarios` si no existe...');
+    console.log('Creando tabla `salarios_municipios` si no existe...');
 
     await db.query(`
-      CREATE TABLE IF NOT EXISTS salarios (
+      CREATE TABLE IF NOT EXISTS salarios_municipios (
         id_salario INT AUTO_INCREMENT PRIMARY KEY,
         id_cargo INT NOT NULL,
         id_municipio INT NOT NULL,
         salario DECIMAL(12,2) NOT NULL,
-        fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        FOREIGN KEY (id_cargo) REFERENCES cargos(id_cargo),
+        FOREIGN KEY (id_municipio) REFERENCES municipios(id_municipio),
+        UNIQUE KEY unique_cargo_municipio (id_cargo, id_municipio)
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
     `);
 
@@ -19,13 +21,13 @@ const run = async () => {
 
     // Insertar ejemplo si no existe fila para id_cargo=1,id_municipio=1
     const [rows] = await db.query(
-      'SELECT COUNT(*) AS cnt FROM salarios WHERE id_cargo = ? AND id_municipio = ?',
+      'SELECT COUNT(*) AS cnt FROM salarios_municipios WHERE id_cargo = ? AND id_municipio = ?',
       [1, 1]
     );
 
     if (rows[0].cnt === 0) {
       await db.query(
-        'INSERT INTO salarios (id_cargo, id_municipio, salario) VALUES (?, ?, ?)',
+        'INSERT INTO salarios_municipios (id_cargo, id_municipio, salario) VALUES (?, ?, ?)',
         [1, 1, 2000000.00]
       );
       console.log('Inserción: salario para id_cargo=1,id_municipio=1 -> 2000000.00');
@@ -41,9 +43,9 @@ const run = async () => {
     ];
 
     for (const [id_cargo, id_municipio, salario] of extra) {
-      const [r] = await db.query('SELECT COUNT(*) AS cnt FROM salarios WHERE id_cargo = ? AND id_municipio = ?', [id_cargo, id_municipio]);
+      const [r] = await db.query('SELECT COUNT(*) AS cnt FROM salarios_municipios WHERE id_cargo = ? AND id_municipio = ?', [id_cargo, id_municipio]);
       if (r[0].cnt === 0) {
-        await db.query('INSERT INTO salarios (id_cargo, id_municipio, salario) VALUES (?, ?, ?)', [id_cargo, id_municipio, salario]);
+        await db.query('INSERT INTO salarios_municipios (id_cargo, id_municipio, salario) VALUES (?, ?, ?)', [id_cargo, id_municipio, salario]);
         console.log(`Inserción: salario para id_cargo=${id_cargo},id_municipio=${id_municipio} -> ${salario}`);
       }
     }
