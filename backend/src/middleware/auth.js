@@ -80,3 +80,26 @@ export const requireRole = (...rolesPermitidos) => {
  * Middleware para verificar que el usuario tiene presidencia_nacional
  */
 export const requirePresidenciaNacional = requireRole('presidencia_nacional');
+
+/**
+ * Middleware para verificar que el usuario tiene permiso de gestión de usuarios
+ */
+export const verificarPermisoGestionUsuarios = (req, res, next) => {
+  if (!req.user || !req.user.rol) {
+    return res.status(401).json({ 
+      success: false,
+      message: 'Usuario no autenticado' 
+    });
+  }
+
+  const rolesPermitidos = ['presidencia_nacional', 'presidencia'];
+  
+  if (!rolesPermitidos.includes(req.user.rol)) {
+    return res.status(403).json({ 
+      success: false,
+      message: 'Acceso denegado. Solo presidencia nacional o presidencia pueden gestionar usuarios.' 
+    });
+  }
+
+  next();
+};

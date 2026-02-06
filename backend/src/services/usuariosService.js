@@ -11,18 +11,19 @@ export const getUsuarios = async (rolSolicitante, departamentoSolicitante) => {
     `;
     const params = [];
 
+    // GESTIÓN DE USUARIOS: Excluir presidencia nacional, filtrar por departamento
     if (rolSolicitante === 'presidencia_nacional') {
-      // Presidencia Nacional ve TODOS excepto a sí misma
+      // Presidencia Nacional ve TODOS los usuarios MENOS a sí misma
       query += ` AND rol != 'presidencia_nacional'`;
     } else if (rolSolicitante === 'presidencia') {
-      // Presidencia ve solo usuarios de su departamento
-      query += ` AND departamento = ? AND rol = 'usuario'`;
+      // Presidencia departamental ve solo usuarios de su propio departamento
+      query += ` AND departamento = ?`;
       params.push(departamentoSolicitante);
     }
 
     query += ` ORDER BY fecha_creacion DESC`;
 
-    console.log('🔍 Query usuarios:', query);
+    console.log('🔍 Query usuarios (Gestión):', query);
     console.log('📊 Params:', params);
 
     const [usuarios] = await pool.query(query, params);
@@ -39,6 +40,46 @@ export const getUsuarios = async (rolSolicitante, departamentoSolicitante) => {
     return usuarios;
   } catch (error) {
     console.error('❌ Error en getUsuarios service:', error);
+    throw error;
+  }
+};
+
+// ============================================
+// OBTENER PRESIDENCIAS (para Información de Presidencias)
+// ============================================
+export const getPresidencias = async (rolSolicitante, departamentoSolicitante) => {
+  try {
+    let query = `
+      SELECT id_usuario, email, nombre, celular, departamento, rol, activo, fecha_creacion
+      FROM usuarios
+      WHERE 1=1
+    `;
+    const params = [];
+
+    if (rolSolicitante === 'presidencia_nacional') {
+      // Presidencia Nacional ve TODAS las presidencias departamentales
+      query += ` AND rol = 'presidencia'`;
+    } else if (rolSolicitante === 'presidencia') {
+      // Presidencia departamental ve TODAS las presidencias (nacionales + departamentales)
+      query += ` AND (rol = 'presidencia' OR rol = 'presidencia_nacional')`;
+    } else if (rolSolicitante === 'usuario') {
+      // Usuario regular solo ve presidencias de su departamento o nacional
+      query += ` AND ((rol = 'presidencia' AND departamento = ?) OR rol = 'presidencia_nacional')`;
+      params.push(departamentoSolicitante);
+    }
+
+    query += ` ORDER BY fecha_creacion DESC`;
+
+    console.log('🔍 Query presidencias:', query);
+    console.log('📊 Params:', params);
+
+    const [presidencias] = await pool.query(query, params);
+    
+    console.log('✅ Presidencias obtenidas:', presidencias.length);
+    
+    return presidencias;
+  } catch (error) {
+    console.error('❌ Error en getPresidencias service:', error);
     throw error;
   }
 };

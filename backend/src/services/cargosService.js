@@ -8,20 +8,25 @@ export const getCargos = async (departamento, rol) => {
     SELECT DISTINCT c.id_cargo, c.nombre_cargo,
            COUNT(DISTINCT a.id_afiliado) as total_afiliados
     FROM cargos c
-    LEFT JOIN afiliados a ON c.id_cargo = a.id_cargo
   `;
   
   const params = [];
   
-  // Si no es presidencia_nacional, filtrar por departamento
+  // Si no es presidencia_nacional, filtrar por departamento basado en salarios y municipios
   if (rol !== 'presidencia_nacional' && departamento) {
     query += `
-    LEFT JOIN municipios m ON a.municipio_trabajo = m.id_municipio
+    LEFT JOIN salarios_municipios sm ON c.id_cargo = sm.id_cargo
+    LEFT JOIN municipios m ON sm.id_municipio = m.id_municipio
+    LEFT JOIN afiliados a ON c.id_cargo = a.id_cargo AND a.municipio_trabajo = m.id_municipio
     WHERE m.departamento = ?
     `;
     params.push(departamento);
-    console.log(`📋 [${rol}] Filtrando cargos por departamento:`, departamento);
+    console.log(`📋 [${rol}] Filtrando cargos con salarios en departamento:`, departamento);
   } else {
+    // Presidencia nacional ve todos los cargos
+    query += `
+    LEFT JOIN afiliados a ON c.id_cargo = a.id_cargo
+    `;
     console.log(`📋 [presidencia_nacional] Cargando TODOS los cargos`);
   }
   
@@ -41,6 +46,39 @@ export const getCargoById = async (id) => {
     [id]
   );
   return cargos[0];
+};
+
+// ============================================
+// OBTENER MUNICIPIOS Y SALARIOS POR CARGO (filtrado por departamento)
+// ============================================
+export const getMunicipiosByCargo = async (id, departamento, rol) => {
+  let query = `
+    SELECT DISTINCT 
+      m.id_municipio,
+      m.nombre_municipio,
+      m.departamento,
+      s.salario
+    FROM salarios_municipios s
+    LEFT JOIN municipios m ON s.id_municipio = m.id_municipio
+    WHERE s.id_cargo = ?
+  `;
+  
+  const params = [id];
+  
+  // Si no es presidencia_nacional, filtrar por departamento del usuario
+  if (rol !== 'presidencia_nacional' && departamento) {
+    query += ` AND m.departamento = ?`;
+    params.push(departamento);
+    console.log(`🗺️ [${rol}] Filtrando municipios para cargo ${id} en departamento: ${departamento}`);
+  } else {
+    console.log(`🗺️ [presidencia_nacional] Mostrando TODOS los municipios para cargo ${id}`);
+  }
+  
+  query += ` ORDER BY m.nombre_municipio`;
+  
+  const [datos] = await db.query(query, params);
+  
+  return datos;
 };
 
 // ============================================

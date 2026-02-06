@@ -5,7 +5,10 @@ import { verificarPermisoGestionUsuarios } from "../middleware/auth.js";
 
 const router = express.Router();
 
-// Todas estas rutas requieren permisos de gestión
+// Ruta pública: obtener presidencias (todos pueden acceder)
+router.get("/presidencias/list", usuariosController.getPresidencias);
+
+// Todas las demás rutas requieren permisos de gestión
 router.use(verificarPermisoGestionUsuarios);
 
 router.get("/", usuariosController.getUsuarios);

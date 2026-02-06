@@ -154,7 +154,7 @@ export const deleteMunicipio = async (id, rol) => {
 
   // Verificar si hay salarios en este municipio
   const [salarios] = await db.query(
-    'SELECT COUNT(*) as count FROM salarios WHERE id_municipio = ?',
+    'SELECT COUNT(*) as count FROM salarios_municipios WHERE id_municipio = ?',
     [id]
   );
 

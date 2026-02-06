@@ -99,12 +99,29 @@ function Afiliados() {
   }
 };
 
-  const handleEditarAfiliado = async (formData) => {
+  const handleEditarAfiliado = async (afiliadoId, formData) => {
   try {
     console.log("Enviando datos del afiliado...");
-    const response = await fetchWithAuth("/api/afiliados", {
-      method: "POST",
-      body: JSON.stringify(formData)
+    
+    // Filtrar solo los campos permitidos por el backend
+    const camposPermitidos = [
+      'cedula', 'nombres', 'apellidos', 'religion_id', 'fecha_nacimiento', 
+      'fecha_afiliacion', 'direccion_domicilio', 'municipio_domicilio', 
+      'municipio_residencia', 'direccion_residencia', 'id_cargo', 'id_eps', 
+      'id_arl', 'id_pension', 'id_cesantias', 'id_institucion', 'municipio_trabajo',
+      'foto_afiliado'
+    ];
+    
+    const datosLimpios = {};
+    for (const campo of camposPermitidos) {
+      if (formData.hasOwnProperty(campo)) {
+        datosLimpios[campo] = formData[campo];
+      }
+    }
+    
+    const response = await fetchWithAuth(`/api/afiliados/${afiliadoId}`, {
+      method: "PUT",
+      body: JSON.stringify(datosLimpios)
     });
 
     if (!response.ok) {
