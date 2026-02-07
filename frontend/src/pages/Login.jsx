@@ -1,6 +1,8 @@
 // frontend/src/pages/Login.jsx
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { FaEye, FaEyeSlash } from "react-icons/fa";
+
 import './Login.css';
 
 export default function Login() {
@@ -9,6 +11,7 @@ export default function Login() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [recordarme, setRecordarme] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
@@ -107,7 +110,7 @@ export default function Login() {
               <span className="login-input-icon">🔒</span>
               <input
                 id="password"
-                type="password"
+                type={showPassword ? 'text' : 'password'}
                 className="login-input"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
@@ -115,6 +118,16 @@ export default function Login() {
                 required
                 autoComplete="current-password"
               />
+              <button
+  type="button"
+  className="login-toggle-password"
+  onClick={() => setShowPassword(!showPassword)}
+  title={showPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
+  aria-label="Toggle password visibility"
+>
+  {showPassword ? <FaEyeSlash /> : <FaEye />}
+</button>
+
             </div>
           </div>
 
