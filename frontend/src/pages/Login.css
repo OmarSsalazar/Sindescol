@@ -190,7 +190,7 @@
 
 .login-input {
   width: 100%;
-  padding: 0.9rem 1rem 0.9rem 3rem;
+  padding: 0.9rem 3rem 0.9rem 3rem;
   border: 2px solid #E3F2FD;
   border-radius: 8px;
   font-size: 1rem;
@@ -215,6 +215,33 @@
 
 .login-input::placeholder {
   color: #999;
+}
+
+/* Botón toggle de visibilidad de contraseña */
+.login-toggle-password {
+  position: absolute;
+  right: 1rem;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  font-size: 1.2rem;
+  cursor: pointer;
+  padding: 0.5rem;
+  transition: all 0.3s ease;
+  color: #90CAF9;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.login-toggle-password:hover {
+  color: #1976D2;
+  transform: translateY(-50%) scale(1.1);
+}
+
+.login-toggle-password:active {
+  transform: translateY(-50%) scale(0.95);
 }
 
 /* Checkbox "Recordarme" */
