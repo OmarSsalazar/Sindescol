@@ -40,6 +40,9 @@ export const cargosController = {
   createCargo: async (req, res) => {
     try {
       const { rol } = req.user;
+      if (rol === 'usuario') {
+        return res.status(403).json({ success: false, message: 'No tienes permiso para crear cargos' });
+      }
       console.log(`➕ POST /cargos - Rol: ${rol}`);
       const cargo = await cargosService.createCargo(req.body);
       res.status(201).json({ success: true, data: cargo });
@@ -52,6 +55,9 @@ export const cargosController = {
   updateCargo: async (req, res) => {
     try {
       const { rol } = req.user;
+      if (rol === 'usuario') {
+        return res.status(403).json({ success: false, message: 'No tienes permiso para editar cargos' });
+      }
       console.log(`✏️ PUT /cargos/${req.params.id} - Rol: ${rol}`);
       const cargo = await cargosService.updateCargo(req.params.id, req.body);
       res.json({ success: true, data: cargo });
@@ -64,6 +70,9 @@ export const cargosController = {
   deleteCargo: async (req, res) => {
     try {
       const { departamento, rol } = req.user;
+      if (rol === 'usuario') {
+        return res.status(403).json({ success: false, message: 'No tienes permiso para eliminar cargos' });
+      }
       console.log(`🗑️ DELETE /cargos/${req.params.id} - Rol: ${rol}, Departamento: ${departamento || 'TODOS'}`);
       const success = await cargosService.deleteCargo(req.params.id, departamento, rol);
       if (success) {

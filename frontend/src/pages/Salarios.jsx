@@ -10,6 +10,11 @@ export default function Salarios() {
   const [municipios, setMunicipios] = useState([]);
   const [alert, setAlert] = useState(null);
   
+  // Obtener datos del usuario actual
+  const usuarioData = localStorage.getItem('usuario') || sessionStorage.getItem('usuario');
+  const usuarioActual = usuarioData ? JSON.parse(usuarioData) : null;
+  const puedeEditar = usuarioActual?.rol !== 'usuario';
+  
   // Estados de paginación
   const [paginaActual, setPaginaActual] = useState(1);
   const [elementosPorPagina, setElementosPorPagina] = useState(20);
@@ -187,9 +192,11 @@ export default function Salarios() {
 
       {alert && <div className={`alert alert-${alert.type}`}>{alert.message}</div>}
 
-      <button className="btn btn-primary" onClick={() => setShowForm(!showForm)}>
-        {showForm ? "✕ Cancelar" : "➕ Nuevo Salario"}
-      </button>
+      {puedeEditar && (
+        <button className="btn btn-primary" onClick={() => setShowForm(!showForm)}>
+          {showForm ? "✕ Cancelar" : "➕ Nuevo Salario"}
+        </button>
+      )}
 
       {showForm && (
         <div className="card" style={{ marginTop: "2rem", background: "var(--light-blue)" }}>
@@ -381,20 +388,22 @@ export default function Salarios() {
                           ${salario.salario?.toLocaleString() || "0"}
                         </td>
                         <td>
-                          <div className="action-buttons">
-                            <button
-                              className="btn btn-warning btn-sm"
-                              onClick={() => handleEdit(salario)}
-                            >
-                              ✏️ Editar
-                            </button>
-                            <button
-                              className="btn btn-danger btn-sm"
-                              onClick={() => handleDelete(salario.id_salario)}
-                            >
-                              🗑️ Eliminar
-                            </button>
-                          </div>
+                          {puedeEditar && (
+                            <div className="action-buttons">
+                              <button
+                                className="btn btn-warning btn-sm"
+                                onClick={() => handleEdit(salario)}
+                              >
+                                ✏️ Editar
+                              </button>
+                              <button
+                                className="btn btn-danger btn-sm"
+                                onClick={() => handleDelete(salario.id_salario)}
+                              >
+                                🗑️ Eliminar
+                              </button>
+                            </div>
+                          )}
                         </td>
                       </tr>
                     ))}

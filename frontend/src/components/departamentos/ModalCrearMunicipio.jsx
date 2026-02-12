@@ -7,16 +7,21 @@ export const ModalCrearMunicipio = ({ isOpen, onClose, onSubmit, departamentos, 
     departamento: ""
   });
 
-  const esDepartamental = usuarioActual?.rol === 'presidencia_departamental';
+  const esDepartamental = usuarioActual?.rol === 'presidencia';
+
+  // Filtrar departamentos para que solo muestre el del usuario
+  const departamentosFiltrados = usuarioActual?.departamento 
+    ? departamentos.filter(d => d.departamento === usuarioActual.departamento)
+    : departamentos;
 
   useEffect(() => {
-    if (esDepartamental && usuarioActual?.departamento) {
+    if (usuarioActual?.departamento) {
       setFormData(prev => ({
         ...prev,
         departamento: usuarioActual.departamento
       }));
     }
-  }, [usuarioActual, esDepartamental, isOpen]);
+  }, [usuarioActual, isOpen]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -79,7 +84,7 @@ export const ModalCrearMunicipio = ({ isOpen, onClose, onSubmit, departamentos, 
                   required
                 >
                   <option value="">Seleccionar departamento...</option>
-                  {departamentos.map((depto, index) => (
+                  {departamentosFiltrados.map((depto, index) => (
                     <option key={index} value={depto.departamento}>
                       {depto.departamento}
                     </option>

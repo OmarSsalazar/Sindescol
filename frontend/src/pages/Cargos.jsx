@@ -10,6 +10,11 @@ export default function Cargos() {
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [alert, setAlert] = useState(null);
+  
+  // Obtener datos del usuario actual
+  const usuarioData = localStorage.getItem('usuario') || sessionStorage.getItem('usuario');
+  const usuarioActual = usuarioData ? JSON.parse(usuarioData) : null;
+  const puedeEditar = usuarioActual?.rol !== 'usuario';
 
   // ⚠️ SOLO UN CARGO EXPANDIDO
   const [cargoExpandido, setCargoExpandido] = useState(null);
@@ -188,9 +193,11 @@ export default function Cargos() {
 
       {alert && <div className={`alert alert-${alert.type}`}>{alert.message}</div>}
 
-      <button className="btn btn-primary" onClick={() => setShowForm(!showForm)}>
-        {showForm ? "✕ Cancelar" : "➕ Nuevo Cargo"}
-      </button>
+      {puedeEditar && (
+        <button className="btn btn-primary" onClick={() => setShowForm(!showForm)}>
+          {showForm ? "✕ Cancelar" : "➕ Nuevo Cargo"}
+        </button>
+      )}
 
       {showForm && (
   <div className="card" style={{ marginTop: "2rem", background: "var(--light-blue)" }}>
@@ -356,14 +363,16 @@ export default function Cargos() {
                   </div>
                 )}
 
-                <div className="action-buttons">
-                  <button className="btn btn-warning btn-sm" onClick={() => handleEdit(cargo)}>
-                    ✏️ Editar
-                  </button>
-                  <button className="btn btn-danger btn-sm" onClick={() => handleDelete(cargo.id_cargo)}>
-                    🗑️ Eliminar
-                  </button>
-                </div>
+                {puedeEditar && (
+                  <div className="action-buttons">
+                    <button className="btn btn-warning btn-sm" onClick={() => handleEdit(cargo)}>
+                      ✏️ Editar
+                    </button>
+                    <button className="btn btn-danger btn-sm" onClick={() => handleDelete(cargo.id_cargo)}>
+                      🗑️ Eliminar
+                    </button>
+                  </div>
+                )}
               </div>
             );
           })}

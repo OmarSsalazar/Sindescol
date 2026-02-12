@@ -26,8 +26,15 @@ export const createMunicipio = async (req, res) => {
     const { rol, departamento: userDepartamento } = req.user;
     const { departamento } = req.body;
 
-    // Si es presidencia_departamental, solo puede crear municipios en su departamento
-    if (rol === 'presidencia_departamental' && departamento !== userDepartamento) {
+    if (rol === 'usuario') {
+      return res.status(403).json({ 
+        success: false, 
+        error: "No tienes permiso para crear municipios" 
+      });
+    }
+
+    // Si es presidencia, solo puede crear municipios en su departamento
+    if (rol === 'presidencia' && departamento !== userDepartamento) {
       return res.status(403).json({ 
         success: false, 
         error: "Solo puedes crear municipios en tu departamento" 
@@ -49,8 +56,15 @@ export const updateMunicipio = async (req, res) => {
     const { id } = req.params;
     const { rol, departamento: userDepartamento } = req.user;
 
-    // Si es presidencia_departamental, verificar que el municipio sea de su departamento
-    if (rol === 'presidencia_departamental') {
+    if (rol === 'usuario') {
+      return res.status(403).json({ 
+        success: false, 
+        error: "No tienes permiso para actualizar municipios" 
+      });
+    }
+
+    // Si es presidencia, verificar que el municipio sea de su departamento
+    if (rol === 'presidencia') {
       const municipio = await departamentosService.getMunicipioById(id);
       if (municipio?.departamento !== userDepartamento) {
         return res.status(403).json({ 
@@ -78,8 +92,15 @@ export const deleteMunicipio = async (req, res) => {
     const { id } = req.params;
     const { rol, departamento: userDepartamento } = req.user;
 
-    // Si es presidencia_departamental, verificar que el municipio sea de su departamento
-    if (rol === 'presidencia_departamental') {
+    if (rol === 'usuario') {
+      return res.status(403).json({ 
+        success: false, 
+        error: "No tienes permiso para eliminar municipios" 
+      });
+    }
+
+    // Si es presidencia, verificar que el municipio sea de su departamento
+    if (rol === 'presidencia') {
       const municipio = await departamentosService.getMunicipioById(id);
       if (municipio?.departamento !== userDepartamento) {
         return res.status(403).json({ 
