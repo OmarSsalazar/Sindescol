@@ -88,24 +88,16 @@ async function procesarExcel(file) {
       blankrows: false
     });
     
-    console.log("📊 Datos Excel leídos (completos):", jsonData);
-    console.log("📊 Primera fila de ejemplo:", jsonData[0]);
-    
     const filas = [];
     
     // Detectar si tiene encabezados (primera fila no es número)
     const tieneEncabezados = jsonData.length > 0 && isNaN(jsonData[0][0]);
     const inicio = tieneEncabezados ? 1 : 0;
     
-    console.log(`🔍 Tiene encabezados: ${tieneEncabezados}, Inicio desde fila: ${inicio}`);
-    
     for (let i = inicio; i < jsonData.length; i++) {
       const fila = jsonData[i];
       
-      console.log(`📋 Fila ${i} completa:`, fila);
-      
       if (!fila || fila.length === 0) {
-        console.warn(`⚠️ Fila ${i} vacía, saltando...`);
         continue;
       }
       
@@ -128,18 +120,14 @@ async function procesarExcel(file) {
         }
       }
       
-      console.log(`🔎 Fila ${i}: Encontrado Cédula="${cedula}", Valor="${valor}", ValorEncontrado=${valorEncontrado}`);
-      
       // Si no se encontró valor, marcar como sin valor
       if (!valorEncontrado) {
-        console.warn(`⚠️ Fila ${i}: Cédula "${cedula}" sin valor registrado`);
         if (cedula) {
           filas.push({ 
             cedula: cedula, 
             valor: null, // Valor null indica que no hay valor
             sinValor: true
           });
-          console.log(`✅ Fila ${i} agregada con advertencia de sin valor`);
         }
         continue;
       }
@@ -157,8 +145,6 @@ async function procesarExcel(file) {
         valor = 0;
       }
       
-      console.log(`✓ Fila ${i}: Cédula="${cedula}", Valor procesado=${valor}`);
-      
       // Validar que tengamos datos válidos
       if (cedula && !isNaN(valor)) {
         filas.push({ 
@@ -166,18 +152,12 @@ async function procesarExcel(file) {
           valor: valor,
           sinValor: false
         });
-        console.log(`✅ Fila ${i} agregada exitosamente`);
-      } else {
-        console.warn(`⚠️ Fila ${i} ignorada - Cédula: "${cedula}", Valor: ${valor}`);
       }
     }
     
-    console.log("✅ Total de cuotas extraídas del Excel:", filas.length);
-    console.log("📊 Cuotas finales:", filas);
     return filas;
     
   } catch (error) {
-    console.error("❌ Error procesando Excel:", error);
     throw new Error("Error al procesar archivo Excel: " + error.message);
   }
 }
@@ -185,9 +165,6 @@ async function procesarExcel(file) {
 async function procesarCSV(file) {
   const contenido = await leerArchivoComoTexto(file);
   const lineas = contenido.split(/\r?\n/).filter(l => l.trim());
-  
-  console.log("📊 Total de líneas en CSV/TXT:", lineas.length);
-  console.log("📊 Primera línea:", lineas[0]);
   
   if (lineas.length === 0) return [];
   
@@ -198,14 +175,10 @@ async function procesarCSV(file) {
   else if (primeraLinea.includes('\t')) separador = '\t';
   else if (primeraLinea.includes('|')) separador = '|';
 
-  console.log(`🔍 Separador detectado: "${separador === '\t' ? '\\t (tabulación)' : separador}"`);
-
   // Determinar si tiene encabezados
   const primeraColumna = lineas[0].split(separador)[0]?.trim().replace(/['"]/g, '');
   const tieneEncabezados = isNaN(primeraColumna);
   const inicio = tieneEncabezados ? 1 : 0;
-
-  console.log(`🔍 Tiene encabezados: ${tieneEncabezados}, Inicio desde línea: ${inicio}`);
 
   const filas = [];
   
@@ -213,16 +186,12 @@ async function procesarCSV(file) {
     const linea = lineas[i].trim();
     
     if (!linea) {
-      console.warn(`⚠️ Línea ${i} vacía, saltando...`);
       continue;
     }
     
     const campos = linea.split(separador).map(c => c.trim().replace(/['"]/g, ''));
     
-    console.log(`📋 Línea ${i} completa:`, campos);
-    
     if (campos.length < 1) {
-      console.warn(`⚠️ Línea ${i} sin datos`);
       continue;
     }
     
@@ -245,22 +214,17 @@ async function procesarCSV(file) {
       }
     }
     
-    console.log(`🔎 Línea ${i}: Cédula="${cedula}", Valor="${valor}", ValorEncontrado=${valorEncontrado}`);
-    
     if (!cedula) {
-      console.warn(`⚠️ Línea ${i} sin cédula, saltando...`);
       continue;
     }
     
     // Si no se encontró valor, marcar como sin valor
     if (!valorEncontrado) {
-      console.warn(`⚠️ Línea ${i}: Cédula "${cedula}" sin valor registrado`);
       filas.push({ 
         cedula: cedula, 
         valor: null, // Valor null indica que no hay valor
         sinValor: true
       });
-      console.log(`✅ Línea ${i} agregada con advertencia de sin valor`);
       continue;
     }
     
@@ -273,12 +237,9 @@ async function procesarCSV(file) {
       valorNumerico = parseFloat(valorLimpio);
       
       if (isNaN(valorNumerico)) {
-        console.warn(`⚠️ Línea ${i}: No se pudo convertir "${valor}" a número`);
         valorNumerico = 0;
       }
     }
-    
-    console.log(`✓ Línea ${i}: Cédula="${cedula}", Valor procesado=${valorNumerico}`);
     
     if (cedula) {
       filas.push({ 
@@ -286,12 +247,9 @@ async function procesarCSV(file) {
         valor: valorNumerico,
         sinValor: false
       });
-      console.log(`✅ Línea ${i} agregada exitosamente`);
     }
   }
 
-  console.log("✅ Total de cuotas extraídas del CSV/TXT:", filas.length);
-  console.log("📊 Cuotas finales:", filas);
   return filas;
 }
 

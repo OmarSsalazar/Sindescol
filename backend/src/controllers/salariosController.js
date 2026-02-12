@@ -62,6 +62,9 @@ export const salariosController = {
   createSalario: async (req, res) => {
     try {
       const { departamento, rol } = req.user;
+      if (rol === 'usuario') {
+        return res.status(403).json({ success: false, message: 'No tienes permiso para crear salarios' });
+      }
       console.log(`➕ POST /salarios - Rol: ${rol}, Departamento: ${departamento || 'TODOS'}`);
       const salario = await salariosService.createSalario(req.body, departamento, rol);
       res.status(201).json({ success: true, data: salario });
@@ -74,6 +77,9 @@ export const salariosController = {
   updateSalario: async (req, res) => {
     try {
       const { departamento, rol } = req.user;
+      if (rol === 'usuario') {
+        return res.status(403).json({ success: false, message: 'No tienes permiso para editar salarios' });
+      }
       console.log(`✏️ PUT /salarios/${req.params.id} - Rol: ${rol}, Departamento: ${departamento || 'TODOS'}`);
       const salario = await salariosService.updateSalario(req.params.id, req.body, departamento, rol);
       res.json({ success: true, data: salario });
@@ -86,6 +92,9 @@ export const salariosController = {
   deleteSalario: async (req, res) => {
     try {
       const { departamento, rol } = req.user;
+      if (rol === 'usuario') {
+        return res.status(403).json({ success: false, message: 'No tienes permiso para eliminar salarios' });
+      }
       console.log(`🗑️ DELETE /salarios/${req.params.id} - Rol: ${rol}, Departamento: ${departamento || 'TODOS'}`);
       const success = await salariosService.deleteSalario(req.params.id, departamento, rol);
       if (success) {

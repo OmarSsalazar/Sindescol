@@ -12,6 +12,9 @@ export default function Departamentos() {
   const [loading, setLoading] = useState(false);
   const [alert, setAlert] = useState(null);
   
+  // Determinar si el usuario puede editar
+  const puedeEditar = usuarioActual?.rol !== 'usuario';
+  
   // Estados de modales
   const [modalDepartamentoOpen, setModalDepartamentoOpen] = useState(false);
   const [modalMunicipioOpen, setModalMunicipioOpen] = useState(false);
@@ -47,8 +50,8 @@ export default function Departamentos() {
           }
         }
 
-        // Si es presidencia_departamental, filtrar para solo mostrar su departamento
-        if (usuarioActual?.rol === 'presidencia_departamental' && usuarioActual?.departamento) {
+        // Si es presidencia (departamental), filtrar para solo mostrar su departamento
+        if (usuarioActual?.rol === 'presidencia' && usuarioActual?.departamento) {
           departamentosUnicos = departamentosUnicos.filter(
             d => d.departamento === usuarioActual.departamento
           );
@@ -157,7 +160,7 @@ export default function Departamentos() {
 
   const handleEditarMunicipio = async (id, formData) => {
     try {
-      const response = await fetchWithAut(`/api/departamentos/municipio/${id}`, {
+      const response = await fetchWithAuth(`/api/departamentos/municipio/${id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formData)
@@ -225,7 +228,7 @@ export default function Departamentos() {
       {alert && <div className={`alert alert-${alert.type}`}>{alert.message}</div>}
 
       <div style={{ display: "flex", gap: "1rem", marginBottom: "2rem" }}>
-        {usuarioActual?.rol === 'presidencia_nacional' && (
+        {usuarioActual?.rol === 'presidencia_nacional' && puedeEditar && (
           <button 
             className="btn btn-primary" 
             onClick={() => setModalDepartamentoOpen(true)}
@@ -233,12 +236,14 @@ export default function Departamentos() {
             ➕ Nuevo Departamento
           </button>
         )}
-        <button 
-          className="btn btn-success" 
-          onClick={() => setModalMunicipioOpen(true)}
-        >
-          ➕ Nueva Entidad
-        </button>
+        {puedeEditar && (
+          <button 
+            className="btn btn-success" 
+            onClick={() => setModalMunicipioOpen(true)}
+          >
+            ➕ Nueva Entidad
+          </button>
+        )}
       </div>
 
       {loading ? (
@@ -292,26 +297,28 @@ export default function Departamentos() {
                             <span className="municipio-nombre">
                               🏙️ {municipio.nombre_municipio}
                             </span>
-                            <div className="municipio-actions">
-                              <button
-                                className="btn btn-warning btn-sm"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  abrirModalEditar(municipio);
-                                }}
-                              >
-                                ✏️
-                              </button>
-                              <button
-                                className="btn btn-danger btn-sm"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleEliminarMunicipio(municipio.id_municipio, municipio.nombre_municipio);
-                                }}
-                              >
-                                🗑️
-                              </button>
-                            </div>
+                            {puedeEditar && (
+                              <div className="municipio-actions">
+                                <button
+                                  className="btn btn-warning btn-sm"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    abrirModalEditar(municipio);
+                                  }}
+                                >
+                                  ✏️
+                                </button>
+                                <button
+                                  className="btn btn-danger btn-sm"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleEliminarMunicipio(municipio.id_municipio, municipio.nombre_municipio);
+                                  }}
+                                >
+                                  🗑️
+                                </button>
+                              </div>
+                            )}
                           </div>
                         ))
                       ) : (
@@ -352,6 +359,7 @@ export default function Departamentos() {
         onSubmit={handleEditarMunicipio}
         municipio={municipioEditar}
         departamentos={departamentos}
+        usuarioActual={usuarioActual}
       />
     </div>
   );
