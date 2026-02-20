@@ -34,10 +34,6 @@ const poolConfig = {
   // Mantener conexión activa (evita "MySQL server has gone away")
   enableKeepAlive: true,
   keepAliveInitialDelay: 10000,
-  // Timeout para queries largos: 30 segundos
-  acquireTimeout: 30000,
-  // Timeout para transacciones: 60 segundos
-  timeout: 60000,
   // Manejo de zona horaria
   timezone: 'Z'
 };
