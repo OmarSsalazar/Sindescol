@@ -331,7 +331,7 @@ export default function Login() {
         onClose={() => setShowChangeLogModal(false)}
       />
 
-      <div className="login-version">v{appVersion || '1.0.5'} - SINDESCOL</div>
+      <div className="login-version">v{appVersion || '1.1.5'} - SINDESCOL</div>
 
       <ModalSolicitudSoporte
         isOpen={showModal}

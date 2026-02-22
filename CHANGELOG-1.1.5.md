@@ -1,4 +1,4 @@
-# SINDESCOL v1.0.5 - Notas de Actualización
+# SINDESCOL v1.1.5 - Notas de Actualización
 
 ## 🎉 Novedades y Mejoras
 
@@ -32,7 +32,7 @@
 
 ### 📋 Mejoras Generales
 - Actualizada información de versión en Sidebar y Login
-- Página de login actualizada con versión 1.0.5
+- Página de login actualizada con versión 1.1.5
 - Sidebar muestra información del sistema mejorada
 - Estilos de alertas modernizados con gradientes y sombras
 
@@ -45,9 +45,9 @@
 - `frontend/src/utils/toastMessages.js` - Catálogo de mensajes predefinidos
 
 ### Archivos Actualizados
-- `package.json` - Versión actualizada a 1.0.5
-- `frontend/package.json` - Versión actualizada a 1.0.5
-- `backend/package.json` - Versión actualizada a 1.0.5
+- `package.json` - Versión actualizada a 1.1.5
+- `frontend/package.json` - Versión actualizada a 1.1.5
+- `backend/package.json` - Versión actualizada a 1.1.5
 - `frontend/src/pages/GestionUsuarios.jsx` - Implementado sistema Toast
 - `frontend/src/pages/Afiliados.jsx` - Implementado sistema Toast
 - `frontend/src/pages/Departamentos.jsx` - Implementado sistema Toast
@@ -100,10 +100,9 @@ El sistema ahora incluye un catálogo completo de mensajes predefinidos para:
 - 500 MB de espacio en disco
 
 ### Archivos del Release
-- `SINDESCOL-1.0.5-x64.exe` - Instalador completo
-- `SINDESCOL-1.0.5-portable.exe` - Versión portable (sin instalación)
+- `SINDESCOL-Setup-1.1.5.exe` - Instalador completo
 
-### Actualización desde v1.0.4
+### Actualización desde v1.0.5
 El sistema detectará automáticamente la actualización disponible y te permitirá descargarla e instalarla sin perder datos.
 
 ## 🐛 Correcciones de Bugs
@@ -117,7 +116,7 @@ El sistema detectará automáticamente la actualización disponible y te permiti
 - Menor uso de memoria en sistema de alertas
 
 ## 👨‍💻 Desarrollo
-**Versión**: 1.0.5  
+**Versión**: 1.1.5  
 **Fecha**: Febrero 2026  
 **Desarrollador**: Omar Santiago Salazar  
 **Licencia**: MIT
