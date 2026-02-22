@@ -127,7 +127,7 @@ export default function Sidebar() {
           <div className="sidebar-info">
             <h4>Información del Sistema</h4>
             <p>
-              Versión 1.0.5<br />
+              Versión 1.1.5<br />
               © 2025 SINDESCOL<br />
               <span style={{fontSize: '0.85em', opacity: 0.8}}>Sistema mejorado con alertas intuitivas</span>
             </p>
