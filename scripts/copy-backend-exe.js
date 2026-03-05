@@ -28,11 +28,5 @@ if (fs.existsSync(srcFile)) {
   console.warn(`⚠️ Warning: server.exe not found at ${srcFile}`);
 }
 
-// También copiar .env si existe
-const envSrc = path.join(__dirname, '..', 'backend', '.env');
-const envDest = path.join(resourcesDir, '.env');
-if (fs.existsSync(envSrc)) {
-  fs.copyFileSync(envSrc, envDest);
-  console.log(`✅ .env copied to: ${envDest}`);
-}
+// Seguridad: no copiar archivos .env en artefactos de distribución
 

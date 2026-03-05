@@ -88,10 +88,6 @@
       {
         "from": "resources/backend.exe",
         "to": "backend.exe"
-      },
-      {
-        "from": "resources/.env",
-        "to": ".env"
       }
     ]
   }

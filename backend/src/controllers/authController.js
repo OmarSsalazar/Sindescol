@@ -36,8 +36,7 @@ export const login = async (req, res) => {
       console.error('❌ Error de base de datos:', dbError.message);
       return res.status(500).json({ 
         success: false,
-        message: 'Error en la conexión a la base de datos',
-        error: dbError.message 
+        message: 'Error en la conexión a la base de datos'
       });
     }
 

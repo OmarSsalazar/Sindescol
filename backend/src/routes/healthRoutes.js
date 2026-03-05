@@ -14,6 +14,7 @@
 import express from 'express';
 import pool from '../config/db.js';
 import { getCacheStats } from '../config/cache.js';
+import { authenticateToken, requirePresidenciaNacional } from '../middleware/auth.js';
 
 const router = express.Router();
 
@@ -25,9 +26,7 @@ router.get('/health', (req, res) => {
   res.json({
     success: true,
     status: 'healthy',
-    uptime: process.uptime(),
-    timestamp: new Date().toISOString(),
-    environment: process.env.NODE_ENV || 'development'
+    timestamp: new Date().toISOString()
   });
 });
 
@@ -104,6 +103,8 @@ router.get('/health/detailed', async (req, res) => {
 
   res.json(health);
 });
+
+router.use(authenticateToken, requirePresidenciaNacional);
 
 /**
  * GET /metrics - Métricas del sistema
