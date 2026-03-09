@@ -9,10 +9,11 @@ import db from '../config/db.js';
 export const login = async (req, res) => {
   try {
     const { email, password } = req.body;
+    const normalizedEmail = email?.trim().toLowerCase();
     const isProduction = process.env.NODE_ENV === 'production';
 
     // Validar datos
-    if (!email || !password) {
+    if (!normalizedEmail || !password) {
       return res.status(400).json({ 
         success: false,
         message: 'Email y contraseña son requeridos' 
@@ -20,7 +21,7 @@ export const login = async (req, res) => {
     }
 
     if (!isProduction) {
-      console.log('🔑 Intento de login:', email);
+      console.log('🔑 Intento de login:', normalizedEmail);
     } else {
       console.log('🔑 Intento de login');
     }
@@ -30,7 +31,7 @@ export const login = async (req, res) => {
     try {
       [usuarios] = await db.query(
         'SELECT id_usuario, email, nombre, password_hash, rol, departamento, activo FROM usuarios WHERE email = ?',
-        [email]
+        [normalizedEmail]
       );
     } catch (dbError) {
       console.error('❌ Error de base de datos:', dbError.message);
@@ -42,7 +43,7 @@ export const login = async (req, res) => {
 
     if (usuarios.length === 0) {
       if (!isProduction) {
-        console.log('❌ Usuario no encontrado:', email);
+        console.log('❌ Usuario no encontrado:', normalizedEmail);
       } else {
         console.log('❌ Usuario no encontrado');
       }
@@ -56,7 +57,7 @@ export const login = async (req, res) => {
 
     if (!usuario.activo) {
       if (!isProduction) {
-        console.log('❌ Usuario inactivo:', email);
+        console.log('❌ Usuario inactivo:', normalizedEmail);
       } else {
         console.log('❌ Usuario inactivo');
       }
@@ -71,7 +72,7 @@ export const login = async (req, res) => {
 
     if (!passwordValido) {
       if (!isProduction) {
-        console.log('❌ Contraseña incorrecta para:', email);
+        console.log('❌ Contraseña incorrecta para:', normalizedEmail);
       } else {
         console.log('❌ Contraseña incorrecta');
       }
@@ -139,9 +140,10 @@ export const login = async (req, res) => {
 export const register = async (req, res) => {
   try {
     const { email, password, rol, departamento } = req.body;
+    const normalizedEmail = email?.trim().toLowerCase();
 
     // Validar datos requeridos
-    if (!email || !password || !rol) {
+    if (!normalizedEmail || !password || !rol) {
       return res.status(400).json({ 
         success: false,
         message: 'Email, contraseña y rol son requeridos' 
@@ -173,12 +175,12 @@ export const register = async (req, res) => {
       });
     }
 
-    console.log('📝 Registro de nuevo usuario:', { email, rol, departamento });
+    console.log('📝 Registro de nuevo usuario:', { email: normalizedEmail, rol, departamento });
 
     // Verificar si el email ya existe
     const [existente] = await db.query(
       'SELECT id_usuario FROM usuarios WHERE email = ?',
-      [email]
+      [normalizedEmail]
     );
 
     if (existente.length > 0) {
@@ -195,12 +197,12 @@ export const register = async (req, res) => {
     // Insertar nuevo usuario
     const [result] = await db.query(
       'INSERT INTO usuarios (email, password_hash, rol, departamento) VALUES (?, ?, ?, ?)',
-      [email, passwordHash, rol, departamento || null]
+      [normalizedEmail, passwordHash, rol, departamento || null]
     );
 
     console.log('✅ Usuario registrado:', { 
       id_usuario: result.insertId, 
-      email, 
+      email: normalizedEmail, 
       rol, 
       departamento: departamento || 'NULL' 
     });
@@ -210,7 +212,7 @@ export const register = async (req, res) => {
       message: 'Usuario registrado exitosamente',
       usuario: {
         id_usuario: result.insertId,
-        email,
+        email: normalizedEmail,
         rol,
         departamento: departamento || null
       }

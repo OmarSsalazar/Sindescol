@@ -14,8 +14,10 @@ jobs:
   backend-tests:
     runs-on: ubuntu-latest
     name: Backend - Jest Tests
+    timeout-minutes: 25
     
     strategy:
+      fail-fast: false
       matrix:
         node-version: [18.x, 20.x]
     
@@ -66,8 +68,10 @@ jobs:
   frontend-tests:
     runs-on: ubuntu-latest
     name: Frontend - Vitest Tests
+    timeout-minutes: 25
     
     strategy:
+      fail-fast: false
       matrix:
         node-version: [18.x, 20.x]
     
@@ -115,6 +119,7 @@ jobs:
     runs-on: ubuntu-latest
     name: 📋 Reporte de Tests
     if: always()
+    timeout-minutes: 5
     
     steps:
       - name: ✅ Resumen
@@ -127,3 +132,11 @@ jobs:
           echo "Frontend Tests: ${{ needs.frontend-tests.result }}"
           echo ""
           echo "Para más detalles, revisa los logs arriba ☝️"
+
+      - name: ❌ Fallar si hubo errores o cancelaciones
+        if: ${{ needs.backend-tests.result != 'success' || needs.frontend-tests.result != 'success' }}
+        run: |
+          echo "Se detectaron errores o cancelaciones en la matriz de tests."
+          echo "Backend: ${{ needs.backend-tests.result }}"
+          echo "Frontend: ${{ needs.frontend-tests.result }}"
+          exit 1
